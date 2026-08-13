@@ -1,6 +1,6 @@
 window.PAGEME_SITE_CONFIG = {
   downloadAvailable: true,
-  downloadUrl: "https://github.com/ayodelemartinsabiwo/pageme/releases/download/v1.3.11-beta.1/PageMe-Android.apk",
+  downloadUrl: "downloads/PageMe-Android.apk",
   version: "B24 Beta",
   versionName: "1.3.11",
   size: "1.1 MB",

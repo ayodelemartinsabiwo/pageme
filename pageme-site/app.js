@@ -11,7 +11,12 @@
     const label = link.querySelector("[data-download-label]");
     if (downloadAvailable) {
       link.href = config.downloadUrl;
-      link.setAttribute("download", "");
+      const resolvedUrl = new URL(link.href, window.location.href);
+      if (resolvedUrl.origin === window.location.origin) {
+        link.setAttribute("download", "PageMe-Android.apk");
+      } else {
+        link.removeAttribute("download");
+      }
       link.removeAttribute("aria-disabled");
       link.classList.remove("is-disabled");
       if (label && link.dataset.availableLabel) label.textContent = link.dataset.availableLabel;

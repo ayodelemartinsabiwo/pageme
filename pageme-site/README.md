@@ -12,15 +12,17 @@ python -m http.server 4173
 
 ## Download configuration
 
-`site-config.js` controls whether downloads are enabled as well as the APK URL, visible build number, size, and SHA-256 checksum. The current public download is the release-signed B24 beta from GitHub Releases.
+`site-config.js` controls whether downloads are enabled as well as the APK URL, visible build number, size, and SHA-256 checksum. The current public download is a same-origin GitHub Pages mirror of the release-signed B24 beta.
 
-For each new distribution, upload a release-signed APK named `PageMe-Android.apk` to a GitHub Release and update `downloadUrl` to the new release tag:
+For each new distribution, upload a release-signed APK named `PageMe-Android.apk` to a GitHub Release. Then update the tag and expected checksum in `.github/workflows/deploy-pages.yml`. The workflow downloads the release asset, rejects it if its checksum differs, and includes the verified APK in the Pages artifact without committing the binary to Git.
+
+Keep the website URL same-origin:
 
 ```text
-https://github.com/OWNER/REPOSITORY/releases/download/TAG/PageMe-Android.apk
+downloads/PageMe-Android.apk
 ```
 
-GitHub Pages should host the website. GitHub Releases should host long-term APK builds.
+GitHub Releases remains the source of truth and archive for signed builds. GitHub Pages serves the current verified beta directly to Android browsers.
 
 ## Public beta signing
 
