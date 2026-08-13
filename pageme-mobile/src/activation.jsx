@@ -61,7 +61,6 @@ export function ActivationScreen({ onActivate, soundOn, reAuthMode = false }) {
     exactAlarm: false,
     autoLaunch: false,
     calendar: false,
-    contacts: false,
     reminderNotifications: false,
   });
   const [permissionAction, setPermissionAction] = React.useState("");
@@ -219,7 +218,7 @@ export function ActivationScreen({ onActivate, soundOn, reAuthMode = false }) {
     const next = {
       notificationListener: false, dndAccess: false, launcherDefault: false,
       exactAlarm: false, autoLaunch: false, calendar: false,
-      contacts: false, reminderNotifications: false,
+      reminderNotifications: false,
     };
     try {
       if (NotificationReceiverPlugin) {
@@ -227,10 +226,6 @@ export function ActivationScreen({ onActivate, soundOn, reAuthMode = false }) {
         next.notificationListener = !!resNotif.enabled;
         const resDnd = await NotificationReceiverPlugin.checkDndAccess();
         next.dndAccess = !!resDnd.enabled;
-        if (typeof NotificationReceiverPlugin.checkContactsPermission === 'function') {
-          const result = await NotificationReceiverPlugin.checkContactsPermission();
-          next.contacts = !!result?.granted;
-        }
         if (typeof NotificationReceiverPlugin.checkPostNotificationsPermission === 'function') {
           const result = await NotificationReceiverPlugin.checkPostNotificationsPermission();
           next.reminderNotifications = !!result?.granted;
@@ -324,8 +319,6 @@ export function ActivationScreen({ onActivate, soundOn, reAuthMode = false }) {
         await FocusSchedulePlugin.requestAutoLaunchAccess();
       } else if (type === 'calendar' && FocusSchedulePlugin) {
         await FocusSchedulePlugin.requestCalendarPermission();
-      } else if (type === 'contacts' && NotificationReceiverPlugin) {
-        await NotificationReceiverPlugin.requestContactsPermission();
       } else if (type === 'reminderNotifications' && NotificationReceiverPlugin) {
         await NotificationReceiverPlugin.requestPostNotificationsPermission();
       }
@@ -539,7 +532,6 @@ export function ActivationScreen({ onActivate, soundOn, reAuthMode = false }) {
               <PermissionAction label="Automatic scheduled launch" sub="Bring PageMe forward when an activation schedule starts" ready={permissions.autoLaunch} disabled={!!permissionAction} onClick={() => togglePermission('autoLaunch')} />
               <PermissionAction label="Calendar access" sub="Read matching event titles for optional reminders" ready={permissions.calendar} disabled={!!permissionAction} onClick={() => togglePermission('calendar')} />
               <PermissionAction label="Reminder notifications" sub="Show calendar reminders without activating PageMe" ready={permissions.reminderNotifications} disabled={!!permissionAction} onClick={() => togglePermission('reminderNotifications')} />
-              <PermissionAction label="Contact access" sub="Choose a trusted emergency contact from the phone" ready={permissions.contacts} disabled={!!permissionAction} onClick={() => togglePermission('contacts')} />
             </div>
             <button className="act-btn primary" onClick={next}
               disabled={!permissions.notificationListener || !permissions.dndAccess || !permissions.launcherDefault}>

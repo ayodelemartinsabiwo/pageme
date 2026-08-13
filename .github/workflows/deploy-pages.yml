@@ -32,11 +32,11 @@ jobs:
         run: |
           mkdir -p pageme-site-dist/downloads
           cp -R pageme-site/. pageme-site-dist/
-          gh release download v1.3.11-beta.1 \
+          gh release download v1.3.12-beta.1 \
             --repo "${{ github.repository }}" \
             --pattern PageMe-Android.apk \
             --dir pageme-site-dist/downloads
-          echo "e1f948121c24a8d11e3413aa380cdecfece6966c9c4841fbb63ad3974b449716  pageme-site-dist/downloads/PageMe-Android.apk" | sha256sum --check
+          echo "bd73c82560e66be80dd270da921c04afc3f05a996673260f0199ec0dbfe892c2  pageme-site-dist/downloads/PageMe-Android.apk" | sha256sum --check
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload static site

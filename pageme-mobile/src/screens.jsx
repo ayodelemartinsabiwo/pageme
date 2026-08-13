@@ -1028,66 +1028,21 @@ export function FocusAutomationOverlay({
 export function EmergencyContactOverlay({ initialContact, onSave, onCancel }) {
   const [name, setName] = React.useState((initialContact || {}).name || "");
   const [number, setNumber] = React.useState((initialContact || {}).number || "");
-  const [suggestions, setSuggestions] = React.useState([]);
-  const [showSugg, setShowSugg] = React.useState(false);
-  const [contactsAllowed, setContactsAllowed] = React.useState(null);
-  const [permPending, setPermPending] = React.useState(false);
-  const searchTimeout = React.useRef(null);
+  const [pickingContact, setPickingContact] = React.useState(false);
 
-  React.useEffect(() => {
-    let mounted = true;
+  const chooseContact = async () => {
     const plugin = window.Capacitor?.Plugins?.NotificationReceiverPlugin;
-    if (!plugin || typeof plugin.checkContactsPermission !== 'function') {
-      setContactsAllowed(false);
-      return () => { mounted = false; };
-    }
-    plugin.checkContactsPermission()
-      .then(result => { if (mounted) setContactsAllowed(!!result?.granted); })
-      .catch(() => { if (mounted) setContactsAllowed(false); });
-    return () => { mounted = false; clearTimeout(searchTimeout.current); };
-  }, []);
-
-  const allowContacts = async () => {
-    const plugin = window.Capacitor?.Plugins?.NotificationReceiverPlugin;
-    if (!plugin || typeof plugin.requestContactsPermission !== 'function') return;
-    setPermPending(true);
+    if (!plugin || typeof plugin.pickContact !== 'function') return;
+    setPickingContact(true);
     try {
-      const result = await plugin.requestContactsPermission();
-      setContactsAllowed(!!result?.granted);
+      const result = await plugin.pickContact();
+      if (result?.selected) {
+        setName(result.name || "");
+        setNumber(result.number || "");
+      }
     } finally {
-      setPermPending(false);
+      setPickingContact(false);
     }
-  };
-
-  const searchContacts = (q) => {
-    clearTimeout(searchTimeout.current);
-    if (!contactsAllowed || !q || q.length < 1) { setSuggestions([]); setShowSugg(false); return; }
-    searchTimeout.current = setTimeout(async () => {
-      try {
-        if (window.Capacitor) {
-          const { NotificationReceiverPlugin } = window.Capacitor.Plugins;
-          if (NotificationReceiverPlugin && typeof NotificationReceiverPlugin.searchContacts === 'function') {
-            const res = await NotificationReceiverPlugin.searchContacts({ query: q });
-            if (res.permissionRequired) {
-              setContactsAllowed(false);
-              setSuggestions([]);
-              setShowSugg(false);
-            } else {
-              setPermPending(false);
-              setSuggestions(res.contacts || []);
-              setShowSugg((res.contacts || []).length > 0);
-            }
-          }
-        }
-      } catch (e) { setSuggestions([]); }
-    }, 250);
-  };
-
-  const pickSuggestion = (c) => {
-    setName(c.name);
-    setNumber(c.number);
-    setSuggestions([]);
-    setShowSugg(false);
   };
 
   const save = () => {
@@ -1119,51 +1074,24 @@ export function EmergencyContactOverlay({ initialContact, onSave, onCancel }) {
       <div style={{ fontFamily: "'Silkscreen', monospace", fontSize: "11px", letterSpacing: "0.22em", color: "#9bbf3a", marginBottom: "8px" }}>EMERGENCY SOS</div>
       <div style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: "22px", marginBottom: "4px" }}>Emergency Contact</div>
       <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12px", color: "rgba(232,230,223,0.6)", marginBottom: "24px", lineHeight: "1.5" }}>
-        Start typing a contact name — matching contacts appear below.<br/>
-        Tap a match to auto-fill the number. Trigger: ESC × 3.
+        Choose one contact through Android or enter the details manually.<br/>
+        PageMe cannot read the rest of your address book. Trigger: ESC × 3.
       </div>
-      {contactsAllowed === false && (
-        <button onClick={allowContacts} disabled={permPending} style={{ ...btnBase, background: "#26321e", color: "#e8e6df", marginBottom: "16px" }}>
-          {permPending ? "Waiting for permission..." : "Use phone contacts"}
-        </button>
-      )}
+      <button onClick={chooseContact} disabled={pickingContact} style={{ ...btnBase, background: "#26321e", color: "#e8e6df", marginBottom: "16px" }}>
+        {pickingContact ? "Opening contacts..." : "Choose one contact"}
+      </button>
       <div style={{ display: "flex", flexDirection: "column", gap: "14px", flex: 1 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           <label style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "11px", color: "rgba(232,230,223,0.7)" }}>Contact Name</label>
           <input
             type="text"
             value={name}
-            onChange={e => { setName(e.target.value); searchContacts(e.target.value); }}
-            onFocus={() => { if (suggestions.length) setShowSugg(true); }}
+            onChange={e => setName(e.target.value)}
             placeholder="e.g. Mom"
             maxLength={50}
             style={inputStyle}
             autoComplete="off"
           />
-          {showSugg && suggestions.length > 0 && (
-            <div style={{
-              width: "100%", zIndex: 10,
-              background: "#0c1207", border: "1px solid rgba(155,191,58,0.4)",
-              borderRadius: "8px", marginTop: "4px", overflowY: "auto", maxHeight: "220px",
-              boxShadow: "0 4px 16px rgba(0,0,0,0.6)",
-            }}>
-              {suggestions.map((c, i) => (
-                <div key={i} onMouseDown={() => pickSuggestion(c)} onClick={() => pickSuggestion(c)}
-                  style={{
-                    padding: "12px 14px", cursor: "pointer",
-                    borderBottom: i < suggestions.length - 1 ? "1px solid rgba(255,255,255,0.06)" : "none",
-                    display: "flex", flexDirection: "column", gap: "2px",
-                    background: "transparent",
-                  }}
-                  onTouchStart={e => e.currentTarget.style.background = "rgba(155,191,58,0.12)"}
-                  onTouchEnd={e => { pickSuggestion(c); e.currentTarget.style.background = "transparent"; }}
-                >
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "13px", color: "#f4f1e8" }}>{c.name}</span>
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "11px", color: "rgba(155,191,58,0.7)" }}>{c.number}</span>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           <label style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "11px", color: "rgba(232,230,223,0.7)" }}>Phone Number</label>
@@ -1171,7 +1099,7 @@ export function EmergencyContactOverlay({ initialContact, onSave, onCancel }) {
             type="tel"
             value={number}
             onChange={e => setNumber(e.target.value)}
-            placeholder="Auto-fills when contact selected"
+            placeholder="e.g. +234..."
             maxLength={20}
             style={inputStyle}
           />

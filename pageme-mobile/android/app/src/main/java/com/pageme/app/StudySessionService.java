@@ -29,19 +29,6 @@ public class StudySessionService extends Service {
     private Runnable watchdog;
     private android.view.WindowManager windowManager;
     private android.view.View statusBlockerView;
-    private final Runnable collapseRunnable = new Runnable() {
-        @Override
-        public void run() {
-            android.content.SharedPreferences prefs =
-                getSharedPreferences("PageMePrefs", Context.MODE_PRIVATE);
-            boolean studyActive = prefs.getBoolean("study_session_active", false);
-            if (studyActive) {
-                collapseStatusBar();
-                handler.postDelayed(this, 250);
-            }
-        }
-    };
-
     // ── Lifecycle helpers ────────────────────────────────────────────
 
     public static void start(Context ctx) {
@@ -65,7 +52,6 @@ public class StudySessionService extends Service {
         ensureChannel();
         startForeground(NOTIF_ID, buildNotification());
         startWatchdog();
-        handler.post(collapseRunnable);
         setupStatusBlocker();
     }
 
@@ -73,7 +59,6 @@ public class StudySessionService extends Service {
     public void onDestroy() {
         super.onDestroy();
         if (watchdog != null) handler.removeCallbacks(watchdog);
-        handler.removeCallbacks(collapseRunnable);
         removeStatusBlocker();
     }
 
@@ -305,13 +290,4 @@ public class StudySessionService extends Service {
         }
     }
 
-    @android.annotation.SuppressLint("WrongConstant")
-    private void collapseStatusBar() {
-        try {
-            Object statusBarService = getSystemService("statusbar");
-            Class<?> statusBarManager = Class.forName("android.app.StatusBarManager");
-            java.lang.reflect.Method collapsePanels = statusBarManager.getMethod("collapsePanels");
-            collapsePanels.invoke(statusBarService);
-        } catch (Exception ignored) {}
-    }
 }

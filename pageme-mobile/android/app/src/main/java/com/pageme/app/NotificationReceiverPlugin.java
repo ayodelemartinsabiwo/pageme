@@ -10,20 +10,17 @@ import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
+import com.getcapacitor.annotation.ActivityCallback;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.annotation.Permission;
 import com.getcapacitor.annotation.PermissionCallback;
 import com.getcapacitor.PermissionState;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import androidx.activity.result.ActivityResult;
 
 @CapacitorPlugin(
     name = "NotificationReceiverPlugin",
     permissions = {
-        @Permission(alias = "camera", strings = { android.Manifest.permission.CAMERA }),
-        @Permission(alias = "postNotifications", strings = { "android.permission.POST_NOTIFICATIONS" }),
-        @Permission(alias = "contacts", strings = { android.Manifest.permission.READ_CONTACTS })
+        @Permission(alias = "postNotifications", strings = { "android.permission.POST_NOTIFICATIONS" })
     }
 )
 public class NotificationReceiverPlugin extends Plugin {
@@ -335,10 +332,6 @@ public class NotificationReceiverPlugin extends Plugin {
         call.resolve();
     }
 
-    private static volatile boolean isTorchOn = false;
-    private static volatile String activeTorchCameraId = null;
-    private static final ExecutorService TORCH_EXECUTOR = Executors.newSingleThreadExecutor();
-
     private void beginRuntimePermissionFlow() {
         if (getActivity() instanceof MainActivity) {
             ((MainActivity) getActivity()).beginRuntimePermissionFlow();
@@ -352,85 +345,27 @@ public class NotificationReceiverPlugin extends Plugin {
     }
 
     @PluginMethod
-    public void toggleTorch(PluginCall call) {
-        if (getPermissionState("camera") != PermissionState.GRANTED) {
-            beginRuntimePermissionFlow();
-            requestPermissionForAlias("camera", call, "cameraPermissionCallback");
+    public void setScreenLight(PluginCall call) {
+        boolean enabled = call.getBoolean("enabled", false);
+        if (getActivity() == null) {
+            call.reject("PageMe screen is unavailable");
             return;
         }
-        setTorchWithPermission(call, null);
-    }
-
-    @PermissionCallback
-    public void cameraPermissionCallback(PluginCall call) {
-        endRuntimePermissionFlow();
-        if (getPermissionState("camera") != PermissionState.GRANTED) {
-            call.reject("Camera permission is required to use the torch");
-            return;
-        }
-        setTorchWithPermission(call, null);
-    }
-
-    @PluginMethod
-    public void setTorch(PluginCall call) {
-        if (getPermissionState("camera") != PermissionState.GRANTED) {
-            call.reject("Camera permission is required to use the torch");
-            return;
-        }
-        setTorchWithPermission(call, call.getBoolean("enabled", false));
-    }
-
-    @PluginMethod
-    public void getTorchState(PluginCall call) {
-        JSObject ret = new JSObject();
-        ret.put("isOn", isTorchOn);
-        call.resolve(ret);
-    }
-
-    private void setTorchWithPermission(PluginCall call, Boolean requestedState) {
-        Context context = getContext();
-        TORCH_EXECUTOR.execute(() -> {
-            try {
-                android.hardware.camera2.CameraManager cameraManager =
-                    (android.hardware.camera2.CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
-                String cameraId = findTorchCameraId(cameraManager);
-                if (cameraManager != null && cameraId != null) {
-                    boolean targetState = requestedState == null ? !isTorchOn : requestedState;
-                    cameraManager.setTorchMode(cameraId, targetState);
-                    activeTorchCameraId = cameraId;
-                    isTorchOn = targetState;
-                    JSObject ret = new JSObject();
-                    ret.put("isOn", isTorchOn);
-                    call.resolve(ret);
-                    return;
-                }
-                call.reject("No camera flash found");
-            } catch (Exception e) {
-                android.util.Log.e("PageMeReceiver", "Failed to change torch", e);
-                call.reject("Failed to change torch: " + e.getMessage());
+        getActivity().runOnUiThread(() -> {
+            android.view.Window window = getActivity().getWindow();
+            if (window == null) {
+                call.reject("PageMe screen is unavailable");
+                return;
             }
+            android.view.WindowManager.LayoutParams params = window.getAttributes();
+            params.screenBrightness = enabled
+                ? android.view.WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_FULL
+                : android.view.WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE;
+            window.setAttributes(params);
+            JSObject ret = new JSObject();
+            ret.put("isOn", enabled);
+            call.resolve(ret);
         });
-    }
-
-    private static String findTorchCameraId(android.hardware.camera2.CameraManager cameraManager)
-            throws android.hardware.camera2.CameraAccessException {
-        if (cameraManager == null) return null;
-        String firstFlashCamera = null;
-        for (String cameraId : cameraManager.getCameraIdList()) {
-            android.hardware.camera2.CameraCharacteristics characteristics =
-                cameraManager.getCameraCharacteristics(cameraId);
-            Boolean hasFlash = characteristics.get(
-                android.hardware.camera2.CameraCharacteristics.FLASH_INFO_AVAILABLE);
-            if (!Boolean.TRUE.equals(hasFlash)) continue;
-            if (firstFlashCamera == null) firstFlashCamera = cameraId;
-            Integer facing = characteristics.get(
-                android.hardware.camera2.CameraCharacteristics.LENS_FACING);
-            if (facing != null && facing ==
-                    android.hardware.camera2.CameraCharacteristics.LENS_FACING_BACK) {
-                return cameraId;
-            }
-        }
-        return firstFlashCamera;
     }
 
     @PluginMethod
@@ -765,108 +700,54 @@ public class NotificationReceiverPlugin extends Plugin {
     }
 
     @PluginMethod
-    public void searchContacts(PluginCall call) {
-        String query = call.getString("query", "").trim();
-        JSObject ret = new JSObject();
-        org.json.JSONArray contacts = new org.json.JSONArray();
-
-        if (query.length() < 1) {
-            ret.put("contacts", contacts);
-            call.resolve(ret);
-            return;
-        }
-
-        if (getPermissionState("contacts") != PermissionState.GRANTED) {
-            ret.put("contacts", contacts);
-            ret.put("permissionRequired", true);
-            call.resolve(ret);
-            return;
-        }
-
+    public void pickContact(PluginCall call) {
+        Intent intent = new Intent(Intent.ACTION_PICK,
+            android.provider.ContactsContract.CommonDataKinds.Phone.CONTENT_URI);
         try {
-            String[] projection = {
-                android.provider.ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
-                android.provider.ContactsContract.CommonDataKinds.Phone.NUMBER,
-            };
-            String selection = android.provider.ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME
-                + " LIKE ?";
-            String[] args = { "%" + query + "%" };
-            android.database.Cursor cursor = getContext().getContentResolver().query(
-                android.provider.ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                projection, selection, args,
-                android.provider.ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC"
-            );
-            java.util.Set<String> seen = new java.util.HashSet<>();
-            if (cursor != null) {
-                int nameIdx = cursor.getColumnIndex(android.provider.ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
-                int numIdx  = cursor.getColumnIndex(android.provider.ContactsContract.CommonDataKinds.Phone.NUMBER);
-                while (cursor.moveToNext() && contacts.length() < 8) {
-                    String name = cursor.getString(nameIdx);
-                    String number = cursor.getString(numIdx);
-                    if (name == null || number == null) continue;
-                    String key = name + "|" + number;
-                    if (seen.contains(key)) continue;
-                    seen.add(key);
-                    JSObject c = new JSObject();
-                    c.put("name", name);
-                    c.put("number", number.replaceAll("\\s+", ""));
-                    contacts.put(c);
+            if (getActivity() instanceof MainActivity) {
+                ((MainActivity) getActivity()).beginExternalSystemFlow();
+            }
+            startActivityForResult(call, intent, "contactPickerResult");
+        } catch (Exception e) {
+            call.reject("Unable to open contacts", e);
+        }
+    }
+
+    @ActivityCallback
+    public void contactPickerResult(PluginCall call, ActivityResult result) {
+        JSObject ret = new JSObject();
+        Intent data = result.getData();
+        if (result.getResultCode() != android.app.Activity.RESULT_OK || data == null || data.getData() == null) {
+            ret.put("selected", false);
+            call.resolve(ret);
+            return;
+        }
+        String[] projection = {
+            android.provider.ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+            android.provider.ContactsContract.CommonDataKinds.Phone.NUMBER,
+        };
+        try (android.database.Cursor cursor = getContext().getContentResolver().query(
+                data.getData(), projection, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                int nameIdx = cursor.getColumnIndex(
+                    android.provider.ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
+                int numberIdx = cursor.getColumnIndex(
+                    android.provider.ContactsContract.CommonDataKinds.Phone.NUMBER);
+                String name = nameIdx >= 0 ? cursor.getString(nameIdx) : "";
+                String number = numberIdx >= 0 ? cursor.getString(numberIdx) : "";
+                if (number != null && !number.trim().isEmpty()) {
+                    ret.put("selected", true);
+                    ret.put("name", name == null ? "" : name);
+                    ret.put("number", number.replaceAll("\\s+", ""));
+                    call.resolve(ret);
+                    return;
                 }
-                cursor.close();
             }
         } catch (Exception e) {
-            android.util.Log.e("PageMeReceiver", "searchContacts failed", e);
-        }
-
-        ret.put("contacts", contacts);
-        call.resolve(ret);
-    }
-
-    @PluginMethod
-    public void checkContactsPermission(PluginCall call) {
-        JSObject ret = new JSObject();
-        ret.put("granted", getPermissionState("contacts") == PermissionState.GRANTED);
-        call.resolve(ret);
-    }
-
-    @PluginMethod
-    public void requestContactsPermission(PluginCall call) {
-        if (getPermissionState("contacts") == PermissionState.GRANTED) {
-            JSObject ret = new JSObject();
-            ret.put("granted", true);
-            call.resolve(ret);
+            call.reject("Unable to read the selected contact", e);
             return;
         }
-        beginRuntimePermissionFlow();
-        requestPermissionForAlias("contacts", call, "contactsPermissionCallback");
-    }
-
-    @PermissionCallback
-    public void contactsPermissionCallback(PluginCall call) {
-        endRuntimePermissionFlow();
-        JSObject ret = new JSObject();
-        ret.put("granted", getPermissionState("contacts") == PermissionState.GRANTED);
+        ret.put("selected", false);
         call.resolve(ret);
-    }
-
-    public static void turnOffTorch(Context context) {
-        Context appContext = context.getApplicationContext();
-        TORCH_EXECUTOR.execute(() -> {
-            if (!isTorchOn) return;
-            try {
-                android.hardware.camera2.CameraManager cameraManager =
-                    (android.hardware.camera2.CameraManager) appContext.getSystemService(Context.CAMERA_SERVICE);
-                if (cameraManager != null) {
-                    String cameraId = activeTorchCameraId != null
-                        ? activeTorchCameraId : findTorchCameraId(cameraManager);
-                    if (cameraId != null) {
-                        cameraManager.setTorchMode(cameraId, false);
-                        isTorchOn = false;
-                    }
-                }
-            } catch (Exception e) {
-                android.util.Log.w("PageMeReceiver", "Failed to turn off torch", e);
-            }
-        });
     }
 }

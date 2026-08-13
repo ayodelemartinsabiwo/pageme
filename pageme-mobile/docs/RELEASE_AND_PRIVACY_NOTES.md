@@ -28,7 +28,7 @@ directory. Back up both the keystore and its credentials file to a secure,
 access-controlled location. Every future update to the direct-download beta
 must use the same key or Android will reject it as an upgrade.
 
-The current beta build is version `1.3.11` (`versionCode 24`, build B24), supports Android 8.0 and later, and targets API 35. Google Play requires API 35 for mobile submissions at the time of this release work and raises the requirement to API 36 on August 31, 2026. Upgrade and retest before submitting on or after that date.
+The current permission-minimized beta build is version `1.3.12` (`versionCode 25`, build B25), supports Android 8.0 and later, and targets API 35. Google Play requires API 35 for mobile submissions at the time of this release work and raises the requirement to API 36 on August 31, 2026. Upgrade and retest before submitting on or after that date.
 
 ## Production preflight
 
@@ -36,12 +36,12 @@ The current beta build is version `1.3.11` (`versionCode 24`, build B24), suppor
 - Restore an existing UCN and confirm its token is rotated.
 - Send a page and verify the server derives the sender name from its own user row.
 - Confirm inbox pages survive an app restart and remain isolated by UCN.
-- Exercise notification capture, direct reply, torch permission, LoRa opt-in, study mode with and without a timer, and emergency exit on a physical API 33+ device.
-- Complete Play Console declarations for notification listener, usage access, overlay, contacts, Nearby devices, and special-use foreground service behavior.
+- Exercise notification capture, direct reply, screen light, built-in LoRa startup, single-contact picking, study mode with and without a timer, and emergency exit on a physical API 33+ device.
+- Complete Play Console declarations for notification listener, usage access, overlay, Nearby devices, exact alarms, calendar, and special-use foreground service behavior.
 
 ## Sensitive permission posture
 
-PageMe intentionally requests focus-launcher permissions such as notification listener access, usage stats, overlay, DND policy access, contacts, and home launcher. LoRa Nearby-device access and torch camera access are requested only when the user invokes those features. Play Store submission should describe these as core pager and focus-session capabilities, not analytics or advertising behavior.
+PageMe intentionally requests focus-launcher capabilities such as notification listener access, usage stats, overlay, DND policy access, calendar access, exact alarms, and home launcher selection. LoRa runs as an internal receiver and requests Nearby-device access on Android 12+ without location access. Emergency setup uses Android's one-contact picker rather than full address-book access. The light button uses the display at maximum brightness and does not request camera access. Play Store submission should describe the remaining permissions as core pager and focus-session capabilities, not analytics or advertising behavior.
 
 Broad `QUERY_ALL_PACKAGES` access has been removed. Installed study apps are discovered through a launcher-intent visibility query.
 

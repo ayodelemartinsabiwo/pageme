@@ -353,7 +353,6 @@ public class MainActivity extends BridgeActivity {
             if (isResumed && !hasWindowFocus() && isPagerActive && isFocusActive
                     && !isRuntimePermissionFlowActive()
                     && !isKeyguardLocked && !bypassRelaunch) {
-                collapseStatusBar();
                 hideSystemUI();
                 collapseHandler.postDelayed(this, 200);
             }
@@ -366,7 +365,6 @@ public class MainActivity extends BridgeActivity {
         screenPinRequestIssued = false;
         pinHandler.removeCallbacks(delayedPinRequest);
         collapseHandler.removeCallbacks(collapseRunnable);
-        NotificationReceiverPlugin.turnOffTorch(this);
         super.onPause();
 
         android.content.SharedPreferences prefs = getSharedPreferences("PageMePrefs", android.content.Context.MODE_PRIVATE);
@@ -452,24 +450,6 @@ public class MainActivity extends BridgeActivity {
                     e.printStackTrace();
                 }
             }
-        }
-    }
-
-    @android.annotation.SuppressLint("WrongConstant")
-    private void collapseStatusBar() {
-        android.content.SharedPreferences prefs = getSharedPreferences("PageMePrefs", android.content.Context.MODE_PRIVATE);
-        boolean isPagerActive = prefs.getBoolean("pager_mode_active", false);
-        if (!isPagerActive) {
-            return;
-        }
-
-        try {
-            Object statusBarService = getSystemService("statusbar");
-            Class<?> statusBarManager = Class.forName("android.app.StatusBarManager");
-            java.lang.reflect.Method collapsePanels = statusBarManager.getMethod("collapsePanels");
-            collapsePanels.invoke(statusBarService);
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 

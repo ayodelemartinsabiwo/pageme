@@ -13,7 +13,7 @@ import { readJsonStorage, writeJsonStorage } from './storage.js';
 import { getSessionToken } from './identity.js';
 import { DUPLICATE_PAGE_WINDOW_MS, inboxStorageKey, normalizeInbox, pageContentKey } from './inbox.js';
 import { shouldSyncPagerMode } from './lifecycle.js';
-import { readLoraEnabled, shouldStartLora, writeLoraEnabled } from './lora.js';
+import { shouldStartLora } from './lora.js';
 import { DEFAULT_FOCUS_SCHEDULE, focusScheduleSummary, normalizeFocusSchedule } from './focus-schedule.js';
 import { deleteBeforeTextCursor, insertTextAtCursor, moveTextCursor } from './compose-editing.js';
 import { ActivationScreen } from './activation.jsx';
@@ -104,7 +104,6 @@ export function App() {
   const [focusSilentPages, setFocusSilentPages] = React.useState(() =>
     localStorage.getItem("pageme_focus_silent_pages") === "true"
   );
-  const [loraEnabled, setLoraEnabled] = React.useState(() => readLoraEnabled());
   const [focusAutomation, setFocusAutomation] = React.useState(() => normalizeFocusSchedule(
     readJsonStorage("pageme_focus_schedule", DEFAULT_FOCUS_SCHEDULE)
   ));
@@ -396,7 +395,6 @@ export function App() {
     { id: "housing",   label: "CASE",         value: t.housing.toUpperCase() },
     { id: "font",      label: "FONT",         value: t.font.toUpperCase() },
     { id: "study_apps",label: "STUDY APPS",   value: studyApps.length ? studyApps.length + " SET" : "CONFIGURE" },
-    { id: "lora",      label: "LORA RECEIVER",value: loraEnabled },
     { id: "emergency_contact", label: "EMERGENCY SOS", value: emergContact.name || "NOT SET" },
     { id: "about",     label: "ABOUT PAGEME", value: "VIEW" },
     { id: "deactivate",label: "RE-RUN SETUP", value: "START" },
@@ -586,6 +584,12 @@ export function App() {
         }, 650);
         setScreen((curr) => curr === "exiting" || curr === "powering-off" ? "home" : curr);
         setPowerHoldProgress(0);
+      } else {
+        setTorchOn(false);
+        const { NotificationReceiverPlugin: NRP } = window.Capacitor.Plugins;
+        if (NRP && typeof NRP.setScreenLight === 'function') {
+          NRP.setScreenLight({ enabled: false }).catch(() => {});
+        }
       }
     });
     return () => {
@@ -633,28 +637,23 @@ export function App() {
   React.useEffect(() => {
     const capacitor = window.Capacitor;
     const LoraBlePlugin = capacitor?.Plugins?.LoraBlePlugin;
-    if (!shouldStartLora({ activated, enabled: loraEnabled, capacitor, plugin: LoraBlePlugin })) return;
+    if (!shouldStartLora({ activated, capacitor, plugin: LoraBlePlugin })) return;
     LoraBlePlugin.startScanAndConnect().catch((error) => {
       console.warn("LoRa receiver unavailable", error);
-      setLoraEnabled(false);
-      writeLoraEnabled(false);
-      showToast("LoRa receiver was turned off. Bluetooth access or supported hardware is required.");
     });
     const handler = LoraBlePlugin.addListener("loraMessageReceived", (info) => {
       triggerIncomingRef.current({ from: info.sender || "RF NODE", number: "915-MESH", text: info.message || "", type: info.type || "text", source: "sms" });
     });
     return () => { handler.remove(); LoraBlePlugin.stopScanAndDisconnect(); };
-  }, [activated, loraEnabled, showToast]);
+  }, [activated]);
 
   React.useEffect(() => {
     if (torchOn) {
       torchTimeoutRef.current = setTimeout(() => {
         if (window.Capacitor) {
           const { NotificationReceiverPlugin } = window.Capacitor.Plugins;
-          if (NotificationReceiverPlugin && typeof NotificationReceiverPlugin.setTorch === 'function') {
-            NotificationReceiverPlugin.setTorch({ enabled: false }).catch(() => {});
-          } else if (NotificationReceiverPlugin && typeof NotificationReceiverPlugin.toggleTorch === 'function') {
-            NotificationReceiverPlugin.toggleTorch().catch(() => {});
+          if (NotificationReceiverPlugin && typeof NotificationReceiverPlugin.setScreenLight === 'function') {
+            NotificationReceiverPlugin.setScreenLight({ enabled: false }).catch(() => {});
           }
         }
         setTorchOn(false);
@@ -662,7 +661,15 @@ export function App() {
     } else {
       if (torchTimeoutRef.current) { clearTimeout(torchTimeoutRef.current); torchTimeoutRef.current = null; }
     }
-    return () => { if (torchTimeoutRef.current) clearTimeout(torchTimeoutRef.current); };
+    return () => {
+      if (torchTimeoutRef.current) clearTimeout(torchTimeoutRef.current);
+      if (torchOn && window.Capacitor) {
+        const { NotificationReceiverPlugin } = window.Capacitor.Plugins;
+        if (NotificationReceiverPlugin && typeof NotificationReceiverPlugin.setScreenLight === 'function') {
+          NotificationReceiverPlugin.setScreenLight({ enabled: false }).catch(() => {});
+        }
+      }
+    };
   }, [torchOn]);
 
   React.useEffect(() => {
@@ -923,20 +930,20 @@ export function App() {
     }
     if (b === "torch") {
       if (torchBusyRef.current) return;
+      const enabled = !torchOn;
+      setTorchOn(enabled);
       if (window.Capacitor) {
         const { NotificationReceiverPlugin } = window.Capacitor.Plugins;
-        if (NotificationReceiverPlugin && typeof NotificationReceiverPlugin.toggleTorch === 'function') {
+        if (NotificationReceiverPlugin && typeof NotificationReceiverPlugin.setScreenLight === 'function') {
           torchBusyRef.current = true;
-          NotificationReceiverPlugin.toggleTorch()
-            .then((res) => setTorchOn(!!res.isOn))
+          NotificationReceiverPlugin.setScreenLight({ enabled })
             .catch((e) => {
-              console.error("Failed to toggle torch", e);
+              console.error("Failed to set screen light", e);
               setTorchOn(false);
-              showToast("Torch unavailable. Allow camera access and try again.");
             })
             .finally(() => { torchBusyRef.current = false; });
         }
-      } else { setTorchOn((prev) => !prev); }
+      }
       return;
     }
     if (b === "go_inbox") { setInboxViewMode("categories"); setInboxSel(0); setScreen("inbox"); return; }
@@ -1140,11 +1147,6 @@ export function App() {
         if (it.id === "housing") setTweak("housing", cycle(["black","beige","purple","red"], t.housing));
         if (it.id === "font") setTweak("font", cycle(["lcd","pixel","segment"], t.font));
         if (it.id === "study_apps") setScreen("study-config");
-        if (it.id === "lora") {
-          const enabled = !loraEnabled;
-          setLoraEnabled(enabled);
-          writeLoraEnabled(enabled);
-        }
         if (it.id === "emergency_contact") setScreen("emergency-contact-config");
         if (it.id === "about") setScreen("about");
         if (it.id === "deactivate") {
@@ -1429,6 +1431,28 @@ export function App() {
           </div>
         )}
       </ChassisComp>
+
+      {torchOn && (
+        <button
+          type="button"
+          aria-label="Turn off screen light"
+          onClick={() => {
+            setTorchOn(false);
+            const plugin = window.Capacitor?.Plugins?.NotificationReceiverPlugin;
+            if (plugin && typeof plugin.setScreenLight === 'function') {
+              plugin.setScreenLight({ enabled: false }).catch(() => {});
+            }
+          }}
+          style={{
+            position: "fixed", inset: 0, zIndex: 9999, width: "100%", height: "100%",
+            border: 0, borderRadius: 0, background: "#fff", color: "#2a2a2a",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontFamily: "'JetBrains Mono', monospace", fontSize: "14px", letterSpacing: 0,
+          }}
+        >
+          SCREEN LIGHT<br/>TAP TO TURN OFF
+        </button>
+      )}
 
       {t.formFactor === "horizontal" && <RotateHint />}
 

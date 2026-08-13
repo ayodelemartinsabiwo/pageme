@@ -32,10 +32,6 @@ import java.util.UUID;
         @Permission(alias = "nearby", strings = {
             "android.permission.BLUETOOTH_SCAN",
             "android.permission.BLUETOOTH_CONNECT"
-        }),
-        @Permission(alias = "location", strings = {
-            android.Manifest.permission.ACCESS_COARSE_LOCATION,
-            android.Manifest.permission.ACCESS_FINE_LOCATION
         })
     }
 )
@@ -58,13 +54,15 @@ public class LoraBlePlugin extends Plugin {
 
     @PluginMethod
     public void startScanAndConnect(PluginCall call) {
-        String requiredAlias = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S
-            ? "nearby" : "location";
-        if (getPermissionState(requiredAlias) != PermissionState.GRANTED) {
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S) {
+            call.reject("LoRa receiver requires Android 12 or newer in the privacy-minimized build");
+            return;
+        }
+        if (getPermissionState("nearby") != PermissionState.GRANTED) {
             if (getActivity() instanceof MainActivity) {
                 ((MainActivity) getActivity()).beginRuntimePermissionFlow();
             }
-            requestPermissionForAlias(requiredAlias, call, "bluetoothPermissionCallback");
+            requestPermissionForAlias("nearby", call, "bluetoothPermissionCallback");
             return;
         }
         startWithPermission(call);
@@ -75,9 +73,7 @@ public class LoraBlePlugin extends Plugin {
         if (getActivity() instanceof MainActivity) {
             ((MainActivity) getActivity()).endRuntimePermissionFlow();
         }
-        String requiredAlias = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S
-            ? "nearby" : "location";
-        if (getPermissionState(requiredAlias) != PermissionState.GRANTED) {
+        if (getPermissionState("nearby") != PermissionState.GRANTED) {
             call.reject("Bluetooth permission was not granted");
             return;
         }
