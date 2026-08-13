@@ -1,0 +1,16 @@
+{
+  "name": "PageMe",
+  "short_name": "PageMe",
+  "description": "A nostalgic focus launcher for Android.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#090b09",
+  "theme_color": "#090b09",
+  "icons": [
+    {
+      "src": "assets/images/pageme-mark.png",
+      "sizes": "1254x1254",
+      "type": "image/png"
+    }
+  ]
+}

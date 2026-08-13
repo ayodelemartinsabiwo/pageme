@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- The Gate — left bar (65% scale from center 54,54) -->
+    <path
+        android:pathData="M39.6,38.2 L45.6,38.2 L50.2,42.8 L50.2,65.2 L45.6,69.8 L39.6,69.8 Z"
+        android:fillColor="#B8E23A"/>
+
+    <!-- The Gate — right bar, mirrored chamfer (65% scale from center 54,54) -->
+    <path
+        android:pathData="M57.8,42.8 L62.5,38.2 L68.4,38.2 L68.4,69.8 L62.5,69.8 L57.8,65.2 Z"
+        android:fillColor="#B8E23A"/>
+</vector>

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090b09">
+  <meta name="description" content="PageMe Android beta privacy notes">
+  <title>PageMe Beta Privacy Notes</title>
+  <link rel="icon" href="assets/images/pageme-mark.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header scrolled">
+    <a class="brand" href="index.html"><img src="assets/images/pageme-mark.png" alt="" width="36" height="36"><span>PAGE.ME</span></a>
+    <a class="text-link" href="index.html">Back to site <span aria-hidden="true">-></span></a>
+  </header>
+  <main class="privacy-main">
+    <p class="privacy-meta">BETA PRIVACY NOTES / UPDATED AUGUST 12, 2026</p>
+    <h1>Privacy in plain terms.</h1>
+    <p>PageMe is early-access software. These notes describe the current beta behavior and will be replaced by the formal policy before a public store release.</p>
+
+    <h2>Information kept on your phone</h2>
+    <p>Your pager inbox, appearance choices, focus settings, selected study apps, emergency contact, and scheduling preferences are stored locally on the Android device. Android Auto Backup is disabled for this personal app state.</p>
+
+    <h2>Information sent to the PageMe service</h2>
+    <p>Account registration, account reauthentication, and PageMe-to-PageMe delivery use the PageMe backend. This includes the account details required to issue your UCN and the sender, recipient, and message information required to deliver a page.</p>
+
+    <h2>Notification access</h2>
+    <p>When you enable Notification Capture, PageMe reads eligible Android notifications so it can display them as pages, group conversations, and offer supported replies. The captured pager inbox is stored on the device. Weather, repeated alerts, PageMe's own notifications, and unsupported system notifications are filtered.</p>
+
+    <h2>Optional permissions</h2>
+    <ul>
+      <li>Do Not Disturb access silences other alerts during Pager Mode.</li>
+      <li>Home-app access allows PageMe to become the launcher while Pager Mode is active.</li>
+      <li>Calendar access reads matching future events for focus reminders. PageMe does not edit or delete calendar events.</li>
+      <li>Contacts access supports emergency-contact setup.</li>
+      <li>Camera access is requested when you use the torch.</li>
+      <li>Nearby-device access is requested only when you opt into supported LoRa/Bluetooth features.</li>
+    </ul>
+
+    <h2>Your control</h2>
+    <p>You can decline optional permissions, deactivate Pager Mode, restore your normal Home app, clear the pager inbox, or uninstall the beta from Android settings.</p>
+
+    <h2>Beta caution</h2>
+    <p>Install PageMe only from the official download linked on this website. Verify the published checksum when sharing the APK. Do not install renamed copies from messages or third-party download sites.</p>
+  </main>
+  <footer class="site-footer"><a class="brand footer-brand" href="index.html"><img src="assets/images/pageme-mark.png" alt="" width="30" height="30"><span>PAGE.ME</span></a><p>Early access software for Android.</p><p class="copyright">Copyright <span data-year></span> PageMe.</p></footer>
+  <script src="app.js" defer></script>
+</body>
+</html>

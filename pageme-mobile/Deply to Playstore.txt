@@ -1,0 +1,22 @@
+
+
+---
+
+### Step 4: Distribution Options
+
+#### Option A: Publish on the Google Play Store (AAB)
+1. Sign up for a [Google Play Developer Console](https://play.google.com/console) account (one-time $25 fee).
+2. Create a new app, upload your generated `.aab` file to the **Internal Testing** or **Production** track.
+3. Submit the listing details, screenshots, and complete the target audience questionnaire.
+4. Google will review and publish the app directly onto the Play Store for your users.
+
+#### Option B: Direct APK Distribution (Ad-Hoc)
+1. Upload the signed `.apk` file to a download link on your website or repository releases.
+2. Direct users to open the link on their phones.
+3. Because PageMe is a custom home launcher, Android will prompt users to enable **"Install unknown apps"** in their settings to sideload the APK.
+4. Once installed, users can select PageMe as their default home screen.
+
+Let me know if you need help automating the signing configurations inside your Gradle files so you can build signed release packages directly from the command line!
+
+Best,
+**Paul**

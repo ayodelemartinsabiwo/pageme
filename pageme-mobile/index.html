@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>PageMe</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0a0a0b" />
+  <meta name="description" content="PageMe — Turn your phone into a 1996 pager. A nostalgic focus-mode launcher for Android." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&family=DotGothic16&family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --room-bg: #050507;
+      --room-bg-2: #0e0f12;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0;
+      width: 100%;
+      min-height: 100vh;
+      min-height: 100dvh;
+      background: radial-gradient(120% 80% at 50% 30%, var(--room-bg-2), var(--room-bg) 75%);
+      color: #ddd;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      -webkit-font-smoothing: antialiased;
+      overscroll-behavior: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body { overflow-x: hidden; }
+    #root {
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      padding: 0;
+    }
+    /* On large screens, frame the phone-pager nicely */
+    @media (min-width: 720px) and (min-height: 600px) {
+      #root { padding: 24px; align-items: center; }
+    }
+
+    body::before {
+      content: "";
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.4 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/></svg>");
+      opacity: 0.14;
+      pointer-events: none;
+      mix-blend-mode: overlay;
+      z-index: 0;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <div id="crash-log" style="display:none; padding:20px; background:#8a0000; color:#fff; font-family:monospace; white-space:pre-wrap; z-index:999999; position:fixed; inset:0; overflow:auto; font-size:12px; line-height:1.4;"></div>
+
+  <script>
+    window.onerror = function(msg, url, line, col, error) {
+      var el = document.getElementById("crash-log");
+      if (el) {
+        el.style.display = "block";
+        el.innerText = "CRASH LOG:\n" + msg + "\n\nFile: " + url + "\nLine: " + line + "\nCol: " + col + "\nStack: " + (error ? error.stack : "");
+      }
+      return false;
+    };
+  </script>
+
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+</html>

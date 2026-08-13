@@ -1,0 +1,43 @@
+Yes, you do need to compile the native Android project and push the updated APK to your physical phone.
+
+Here is why and how to do it:
+
+### Why?
+`npx cap sync android` only copies your web assets (HTML, CSS, JS) from the `/www` folder into the native Android folder structure. It does **not** compile them into the binary APK or install it on your device.
+
+---
+
+### How to Build and Push the APK (via Command Line)
+
+If you are using the command line on Windows, you can compile and push the new build to your phone in two steps:
+
+#### 1. Compile the APK
+Run the Gradle compile command in the `/android` directory:
+```powershell
+# Navigate to the android folder
+cd android
+
+# Fix: Java 22 on Windows fails if TEMP path has spaces (e.g. "AYODELE MARTINS").
+# Set TEMP to a short path before building to avoid this.
+New-Item -ItemType Directory -Path "C:\tmp" -Force | Out-Null
+$env:TEMP = "C:\tmp"; $env:TMP = "C:\tmp"
+
+# Compile the debug APK
+.\gradlew.bat assembleDebug
+```
+*(This will generate the new APK file at `android\app\build\outputs\apk\debug\app-debug.apk`)*
+
+#### 2. Install it on your Connected Phone
+Run the install command using ADB to push the new build directly to your phone (make sure your phone is connected and USB Debugging is authorized):
+```powershell
+# Navigate back to the project root
+cd ..
+
+# Install/overwrite the APK on the connected device
+& "C:\Users\AYODELE MARTINS\AppData\Local\Android\Sdk\platform-tools\adb.exe" install -r "android\app\build\outputs\apk\debug\app-debug.apk"
+```
+
+*Alternatively, if you have **Android Studio** open, you can simply click the **"Run" (green play button)** to build and install it automatically.*
+
+Best,
+**Paul**

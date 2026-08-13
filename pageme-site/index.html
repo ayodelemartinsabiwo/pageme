@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090b09">
+  <meta name="description" content="PageMe turns your Android phone into a focused pager. Explore the experience while the release-signed Android beta is prepared.">
+  <meta property="og:title" content="PageMe - Your phone, without the noise">
+  <meta property="og:description" content="A nostalgic focus launcher for Android. Calls, texts, and chats become pages while distracting apps stay out of sight.">
+  <meta property="og:image" content="assets/images/pager-home.jpeg">
+  <title>PageMe - Your phone, without the noise</title>
+  <link rel="icon" href="assets/images/pageme-mark.png">
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Silkscreen:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header" data-header>
+    <a class="brand" href="#top" aria-label="PageMe home">
+      <img src="assets/images/pageme-mark.png" alt="" width="36" height="36">
+      <span>PAGE.ME</span>
+    </a>
+    <button class="nav-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="site-nav" data-nav-toggle>
+      <span class="nav-toggle-line"></span>
+      <span class="nav-toggle-line"></span>
+      <span class="sr-only">Open navigation</span>
+    </button>
+    <nav class="site-nav" id="site-nav" aria-label="Primary" data-nav>
+      <a href="#experience">Experience</a>
+      <a href="#features">What it does</a>
+      <a href="#install">Install</a>
+      <a class="nav-download is-disabled" aria-disabled="true" data-download-link data-available-label="Download beta" data-unavailable-label="Beta pending"><span data-download-label>Beta pending</span></a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="top" aria-labelledby="hero-title">
+      <div class="hero-media" aria-hidden="true">
+        <img src="assets/images/pager-home.jpeg" alt="" width="540" height="1170">
+      </div>
+      <div class="hero-shade" aria-hidden="true"></div>
+      <div class="hero-content">
+        <p class="signal-label"><span></span> Android release preview</p>
+        <h1 id="hero-title">PageMe</h1>
+        <p class="hero-offer">Turn your Android into a pager.</p>
+        <p class="hero-copy">Calls, texts, and chats arrive as pages. Your home screen becomes a quiet 1996 beeper, so the next thing you open is your life.</p>
+        <div class="hero-actions">
+          <a class="button button-primary is-disabled" aria-disabled="true" data-download-link data-available-label="Download Android beta" data-unavailable-label="Release-signed beta coming soon">
+            <span class="button-icon" aria-hidden="true">↓</span>
+            <span data-download-label>Release-signed beta coming soon</span>
+          </a>
+          <a class="text-link" href="#experience">Try the pager <span aria-hidden="true">-></span></a>
+        </div>
+        <dl class="release-facts" aria-label="Current release details">
+          <div><dt>Build</dt><dd data-release-version>Release pending</dd></div>
+          <div><dt>Requires</dt><dd>Android 8+</dd></div>
+          <div><dt>Size</dt><dd data-release-size>TBA</dd></div>
+        </dl>
+      </div>
+      <a class="hero-next" href="#experience">A quieter phone starts here <span aria-hidden="true">↓</span></a>
+    </section>
+
+    <section class="experience section" id="experience" aria-labelledby="experience-title">
+      <div class="section-heading reveal">
+        <p class="eyebrow">LIVE SIGNAL</p>
+        <h2 id="experience-title">Feel the interface before you install it.</h2>
+        <p>Use the pager keys. The screen responds like PageMe, with only the information needed for the moment.</p>
+      </div>
+
+      <div class="demo-layout">
+        <div class="pager-demo reveal" aria-label="Interactive PageMe pager preview">
+          <div class="pager-speaker" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="pager-brand">PAGE.ME</div>
+          <div class="pager-led" aria-hidden="true"></div>
+          <div class="lcd" role="status" aria-live="polite">
+            <div class="lcd-status"><span>PGR <b class="signal-dot"></b></span><span>09:10 ▰</span></div>
+            <div class="lcd-body" data-demo-screen>
+              <p class="lcd-date">WED, AUG 12</p>
+              <p class="lcd-clock">09:10 AM</p>
+              <p class="lcd-message">NO NEW PAGES</p>
+              <p class="lcd-hint">SELECT A KEY</p>
+            </div>
+          </div>
+          <div class="pager-keys" role="group" aria-label="Pager preview controls">
+            <button type="button" data-demo="inbox">INBOX</button>
+            <button type="button" data-demo="compose">COMPOSE</button>
+            <button type="button" data-demo="focus">FOCUS</button>
+            <button type="button" data-demo="schedule">SCHEDULE</button>
+          </div>
+          <div class="pager-controls" aria-hidden="true">
+            <div>BACK</div><div>▲<br><span>SELECT</span><br>▼</div><div>TORCH</div>
+          </div>
+        </div>
+
+        <div class="demo-notes reveal">
+          <p class="demo-index" data-demo-index>00 / HOME</p>
+          <h3 data-demo-title>Everything quiet. Nothing missing.</h3>
+          <p data-demo-copy>PageMe keeps the essential signal and removes the visual pull of a normal launcher.</p>
+          <div class="demo-rule"></div>
+          <p class="demo-detail" data-demo-detail>Incoming alerts become compact pages while weather and repeated notifications stay out of the inbox.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="screens section" aria-labelledby="screens-title">
+      <div class="section-heading reveal">
+        <p class="eyebrow">THE REAL APP</p>
+        <h2 id="screens-title">A focus tool that looks like one.</h2>
+      </div>
+      <div class="screen-rail" aria-label="PageMe application screens">
+        <figure class="screen-shot reveal">
+          <img src="assets/images/onboarding.jpeg" alt="PageMe onboarding screen introducing the pager mode" width="540" height="1170" loading="lazy">
+          <figcaption><span>01</span> Start with intent</figcaption>
+        </figure>
+        <figure class="screen-shot reveal">
+          <img src="assets/images/pager-home.jpeg" alt="PageMe pager home screen with inbox, compose, focus timer, settings, and torch controls" width="540" height="1170" loading="lazy">
+          <figcaption><span>02</span> Live in the pager</figcaption>
+        </figure>
+        <figure class="screen-shot reveal">
+          <img src="assets/images/compose-page.png" alt="PageMe compose screen with themed keyboard and cursor navigation controls" width="360" height="800" loading="lazy">
+          <figcaption><span>03</span> Reply without leaving</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="features section" id="features" aria-labelledby="features-title">
+      <div class="section-heading reveal">
+        <p class="eyebrow">KEEP THE SIGNAL</p>
+        <h2 id="features-title">Less phone. More presence.</h2>
+      </div>
+      <div class="feature-grid">
+        <article class="feature reveal">
+          <span class="feature-code">01 / PAGES</span>
+          <h3>Messages, simplified</h3>
+          <p>SMS, WhatsApp, and allowed notifications arrive in a grouped pager inbox. Reply without opening the source app.</p>
+        </article>
+        <article class="feature reveal">
+          <span class="feature-code">02 / HOME</span>
+          <h3>Distraction out of sight</h3>
+          <p>With your permission, PageMe becomes the temporary Home app and keeps distracting launchers behind a focused interface.</p>
+        </article>
+        <article class="feature reveal">
+          <span class="feature-code">03 / TIMER</span>
+          <h3>Focus that holds</h3>
+          <p>Start a timed focus session, choose a soothing sound, and open only the study apps you deliberately allowed.</p>
+        </article>
+        <article class="feature reveal">
+          <span class="feature-code">04 / SCHEDULE</span>
+          <h3>Show up on time</h3>
+          <p>Schedule Pager Mode or scan matching calendar events so your focus environment is ready when the session begins.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="install section" id="install" aria-labelledby="install-title">
+      <div class="install-intro reveal">
+        <p class="eyebrow">ANDROID BETA</p>
+        <h2 id="install-title">A careful beta release is on the way.</h2>
+        <p>The public download will open after PageMe has a dedicated release signature. These are the steps Android users will follow when it is ready.</p>
+      </div>
+      <ol class="install-steps">
+        <li class="reveal"><span>1</span><div><h3>Download the APK</h3><p>Tap the download button on your Android phone and keep the file.</p></div></li>
+        <li class="reveal"><span>2</span><div><h3>Allow this install</h3><p>When Android asks, allow your browser to install this PageMe beta, then open it.</p></div></li>
+        <li class="reveal"><span>3</span><div><h3>Choose your focus permissions</h3><p>PageMe explains each permission before sending you to the relevant Android setting.</p></div></li>
+      </ol>
+      <div class="install-actions reveal">
+        <a class="button button-primary is-disabled" aria-disabled="true" data-download-link data-available-label="Download PageMe" data-unavailable-label="Release-signed beta coming soon">
+          <span class="button-icon" aria-hidden="true">↓</span>
+          <span data-download-label>Release-signed beta coming soon</span>
+        </a>
+        <p>APK <span data-release-size>TBA</span> <span class="separator">|</span> Android 8.0 or newer</p>
+        <details class="checksum" data-release-checksum hidden>
+          <summary>Verify the download</summary>
+          <code data-release-hash></code>
+        </details>
+      </div>
+    </section>
+
+    <section class="trust section" aria-labelledby="trust-title">
+      <div class="section-heading reveal">
+        <p class="eyebrow">PERMISSION, NOT ASSUMPTION</p>
+        <h2 id="trust-title">You decide how much PageMe can do.</h2>
+        <p>Notification access turns alerts into pages. Do Not Disturb keeps other alerts quiet. Home-app access lets Pager Mode replace the launcher. Calendar, contacts, camera, and nearby-device access are requested only for the features that need them.</p>
+      </div>
+      <div class="trust-strip reveal">
+        <p><strong>On-device first.</strong> Notification processing, focus preferences, and your pager inbox are stored on the phone. Registration and PageMe-to-PageMe delivery use the PageMe service.</p>
+        <a class="text-link" href="privacy.html">Read beta privacy notes <span aria-hidden="true">-></span></a>
+      </div>
+    </section>
+
+    <section class="final-cta" aria-labelledby="final-title">
+      <img src="assets/images/pageme-mark.png" alt="" width="180" height="180" loading="lazy">
+      <p class="eyebrow">YOUR ATTENTION IS YOURS</p>
+      <h2 id="final-title">Make the phone smaller.</h2>
+      <p>Keep the messages that matter. Leave the feed behind.</p>
+      <a class="button button-primary is-disabled" aria-disabled="true" data-download-link data-available-label="Get PageMe for Android" data-unavailable-label="Release-signed beta coming soon">
+        <span class="button-icon" aria-hidden="true">↓</span>
+        <span data-download-label>Release-signed beta coming soon</span>
+      </a>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <a class="brand footer-brand" href="#top"><img src="assets/images/pageme-mark.png" alt="" width="30" height="30"><span>PAGE.ME</span></a>
+    <p>Early access software for Android.</p>
+    <div><a href="privacy.html">Privacy</a><a href="#install">Install help</a></div>
+    <p class="copyright">Copyright <span data-year></span> PageMe.</p>
+  </footer>
+
+  <script src="site-config.js"></script>
+  <script src="app.js" defer></script>
+</body>
+</html>

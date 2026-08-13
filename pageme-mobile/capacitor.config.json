@@ -1,0 +1,8 @@
+{
+  "appId": "com.pageme.app",
+  "appName": "PageMe",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}
