@@ -23,7 +23,12 @@ If the local npm wrapper cannot locate Node on Windows, invoke the bundled Node 
 5. Run `android\gradlew.bat bundleRelease`. Confirm `android/app/build/outputs/bundle/release/app-release.aab` is signed before upload.
 6. Keep `android/local.properties`, signing keys, credentials, and generated build outputs out of source control.
 
-The current build is version `1.1.0` (`versionCode 2`), supports Android 8.0 and later, and targets API 35. Google Play requires API 35 for mobile submissions at the time of this release work and raises the requirement to API 36 on August 31, 2026. Upgrade and retest before submitting on or after that date.
+The local beta signing identity is stored under the ignored `signing-private/`
+directory. Back up both the keystore and its credentials file to a secure,
+access-controlled location. Every future update to the direct-download beta
+must use the same key or Android will reject it as an upgrade.
+
+The current beta build is version `1.3.11` (`versionCode 24`, build B24), supports Android 8.0 and later, and targets API 35. Google Play requires API 35 for mobile submissions at the time of this release work and raises the requirement to API 36 on August 31, 2026. Upgrade and retest before submitting on or after that date.
 
 ## Production preflight
 

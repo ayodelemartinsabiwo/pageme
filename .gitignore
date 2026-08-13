@@ -12,6 +12,7 @@ pageme-mobile/android/build/
 pageme-mobile/android/app/build/
 pageme-mobile/android/local.properties
 pageme-mobile/artifacts/
+pageme-mobile/signing-private/
 *.log
 .DS_Store
 .env

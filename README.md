@@ -26,4 +26,4 @@ Serve `pageme-site/` with any static web server. The website does not share buil
 
 ## Android releases
 
-Local device-test APKs are excluded from Git. Public downloads remain disabled until a dedicated PageMe signing key is used to produce a release-signed APK. Release signing and privacy checks are documented in `pageme-mobile/docs/RELEASE_AND_PRIVACY_NOTES.md`.
+Local APKs are excluded from Git. Public beta builds are release-signed and distributed through GitHub Releases; the landing page links to the verified release asset. Release signing and privacy checks are documented in `pageme-mobile/docs/RELEASE_AND_PRIVACY_NOTES.md`.
