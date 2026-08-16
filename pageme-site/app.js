@@ -4,6 +4,7 @@
   const config = window.PAGEME_SITE_CONFIG || {};
   const navToggle = document.querySelector("[data-nav-toggle]");
   const nav = document.querySelector("[data-nav]");
+  const navBackdrop = document.querySelector("[data-nav-backdrop]");
   const header = document.querySelector("[data-header]");
   const downloadAvailable = config.downloadAvailable === true && Boolean(config.downloadUrl);
 
@@ -46,8 +47,18 @@
   });
 
   if (navToggle && nav) {
+    const closeNavigation = () => {
+      nav.classList.remove("open");
+      document.body.classList.remove("nav-open");
+      navToggle.setAttribute("aria-expanded", "false");
+      navToggle.setAttribute("aria-label", "Open navigation");
+      const label = navToggle.querySelector(".sr-only");
+      if (label) label.textContent = "Open navigation";
+    };
+
     navToggle.addEventListener("click", () => {
       const open = nav.classList.toggle("open");
+      document.body.classList.toggle("nav-open", open);
       navToggle.setAttribute("aria-expanded", String(open));
       navToggle.setAttribute("aria-label", open ? "Close navigation" : "Open navigation");
       const label = navToggle.querySelector(".sr-only");
@@ -55,9 +66,17 @@
     });
     nav.addEventListener("click", (event) => {
       if (!event.target.closest("a")) return;
-      nav.classList.remove("open");
-      navToggle.setAttribute("aria-expanded", "false");
-      navToggle.setAttribute("aria-label", "Open navigation");
+      closeNavigation();
+    });
+    if (navBackdrop) navBackdrop.addEventListener("click", closeNavigation);
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && nav.classList.contains("open")) {
+        closeNavigation();
+        navToggle.focus();
+      }
+    });
+    window.addEventListener("resize", () => {
+      if (window.innerWidth > 840 && nav.classList.contains("open")) closeNavigation();
     });
   }
 
