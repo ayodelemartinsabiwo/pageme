@@ -365,6 +365,7 @@ public class MainActivity extends BridgeActivity {
         screenPinRequestIssued = false;
         pinHandler.removeCallbacks(delayedPinRequest);
         collapseHandler.removeCallbacks(collapseRunnable);
+        NotificationReceiverPlugin.turnOffTorch(this);
         super.onPause();
 
         android.content.SharedPreferences prefs = getSharedPreferences("PageMePrefs", android.content.Context.MODE_PRIVATE);

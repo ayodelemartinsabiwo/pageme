@@ -587,8 +587,8 @@ export function App() {
       } else {
         setTorchOn(false);
         const { NotificationReceiverPlugin: NRP } = window.Capacitor.Plugins;
-        if (NRP && typeof NRP.setScreenLight === 'function') {
-          NRP.setScreenLight({ enabled: false }).catch(() => {});
+        if (NRP && typeof NRP.setTorch === 'function') {
+          NRP.setTorch({ enabled: false }).catch(() => {});
         }
       }
     });
@@ -652,8 +652,8 @@ export function App() {
       torchTimeoutRef.current = setTimeout(() => {
         if (window.Capacitor) {
           const { NotificationReceiverPlugin } = window.Capacitor.Plugins;
-          if (NotificationReceiverPlugin && typeof NotificationReceiverPlugin.setScreenLight === 'function') {
-            NotificationReceiverPlugin.setScreenLight({ enabled: false }).catch(() => {});
+          if (NotificationReceiverPlugin && typeof NotificationReceiverPlugin.setTorch === 'function') {
+            NotificationReceiverPlugin.setTorch({ enabled: false }).catch(() => {});
           }
         }
         setTorchOn(false);
@@ -665,8 +665,8 @@ export function App() {
       if (torchTimeoutRef.current) clearTimeout(torchTimeoutRef.current);
       if (torchOn && window.Capacitor) {
         const { NotificationReceiverPlugin } = window.Capacitor.Plugins;
-        if (NotificationReceiverPlugin && typeof NotificationReceiverPlugin.setScreenLight === 'function') {
-          NotificationReceiverPlugin.setScreenLight({ enabled: false }).catch(() => {});
+        if (NotificationReceiverPlugin && typeof NotificationReceiverPlugin.setTorch === 'function') {
+          NotificationReceiverPlugin.setTorch({ enabled: false }).catch(() => {});
         }
       }
     };
@@ -930,19 +930,21 @@ export function App() {
     }
     if (b === "torch") {
       if (torchBusyRef.current) return;
-      const enabled = !torchOn;
-      setTorchOn(enabled);
       if (window.Capacitor) {
         const { NotificationReceiverPlugin } = window.Capacitor.Plugins;
-        if (NotificationReceiverPlugin && typeof NotificationReceiverPlugin.setScreenLight === 'function') {
+        if (NotificationReceiverPlugin && typeof NotificationReceiverPlugin.toggleTorch === 'function') {
           torchBusyRef.current = true;
-          NotificationReceiverPlugin.setScreenLight({ enabled })
+          NotificationReceiverPlugin.toggleTorch()
+            .then((result) => setTorchOn(!!result?.isOn))
             .catch((e) => {
-              console.error("Failed to set screen light", e);
+              console.error("Failed to toggle rear torch", e);
               setTorchOn(false);
+              showToast("Rear torch unavailable. Allow camera access and try again.");
             })
             .finally(() => { torchBusyRef.current = false; });
         }
+      } else {
+        setTorchOn((current) => !current);
       }
       return;
     }
@@ -1431,28 +1433,6 @@ export function App() {
           </div>
         )}
       </ChassisComp>
-
-      {torchOn && (
-        <button
-          type="button"
-          aria-label="Turn off screen light"
-          onClick={() => {
-            setTorchOn(false);
-            const plugin = window.Capacitor?.Plugins?.NotificationReceiverPlugin;
-            if (plugin && typeof plugin.setScreenLight === 'function') {
-              plugin.setScreenLight({ enabled: false }).catch(() => {});
-            }
-          }}
-          style={{
-            position: "fixed", inset: 0, zIndex: 9999, width: "100%", height: "100%",
-            border: 0, borderRadius: 0, background: "#fff", color: "#2a2a2a",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontFamily: "'JetBrains Mono', monospace", fontSize: "14px", letterSpacing: 0,
-          }}
-        >
-          SCREEN LIGHT<br/>TAP TO TURN OFF
-        </button>
-      )}
 
       {t.formFactor === "horizontal" && <RotateHint />}
 

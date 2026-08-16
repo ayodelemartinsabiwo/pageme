@@ -7,7 +7,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.view.WindowManager;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -50,35 +49,6 @@ public class RuntimePermissionLifecycleInstrumentedTest {
             assertFalse(prefs.getBoolean("pager_mode_active", true));
         } finally {
             LauncherPlugin.leavePagerMode(context, activity, true);
-            InstrumentationRegistry.getInstrumentation().runOnMainSync(activity::finish);
-        }
-    }
-
-    @Test
-    public void screenLightUsesFullBrightnessWithoutCameraPermission() throws Exception {
-        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        Intent launch = new Intent(context, MainActivity.class)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        Activity launched = InstrumentationRegistry.getInstrumentation().startActivitySync(launch);
-        assertTrue(launched instanceof MainActivity);
-        MainActivity activity = (MainActivity) launched;
-        try {
-            InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
-                WindowManager.LayoutParams params = activity.getWindow().getAttributes();
-                params.screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_FULL;
-                activity.getWindow().setAttributes(params);
-            });
-            assertTrue(activity.getWindow().getAttributes().screenBrightness
-                == WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_FULL);
-
-            InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
-                WindowManager.LayoutParams params = activity.getWindow().getAttributes();
-                params.screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE;
-                activity.getWindow().setAttributes(params);
-            });
-            assertTrue(activity.getWindow().getAttributes().screenBrightness
-                == WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE);
-        } finally {
             InstrumentationRegistry.getInstrumentation().runOnMainSync(activity::finish);
         }
     }

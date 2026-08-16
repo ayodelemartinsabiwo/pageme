@@ -16,15 +16,21 @@ import com.getcapacitor.annotation.Permission;
 import com.getcapacitor.annotation.PermissionCallback;
 import com.getcapacitor.PermissionState;
 import androidx.activity.result.ActivityResult;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @CapacitorPlugin(
     name = "NotificationReceiverPlugin",
     permissions = {
+        @Permission(alias = "camera", strings = { android.Manifest.permission.CAMERA }),
         @Permission(alias = "postNotifications", strings = { "android.permission.POST_NOTIFICATIONS" })
     }
 )
 public class NotificationReceiverPlugin extends Plugin {
     public static NotificationReceiverPlugin instance;
+    private static volatile boolean isTorchOn = false;
+    private static volatile String activeTorchCameraId = null;
+    private static final ExecutorService TORCH_EXECUTOR = Executors.newSingleThreadExecutor();
 
     public NotificationReceiverPlugin() {
         instance = this;
@@ -345,26 +351,117 @@ public class NotificationReceiverPlugin extends Plugin {
     }
 
     @PluginMethod
-    public void setScreenLight(PluginCall call) {
-        boolean enabled = call.getBoolean("enabled", false);
-        if (getActivity() == null) {
-            call.reject("PageMe screen is unavailable");
+    public void toggleTorch(PluginCall call) {
+        if (getPermissionState("camera") != PermissionState.GRANTED) {
+            beginRuntimePermissionFlow();
+            requestPermissionForAlias("camera", call, "cameraPermissionCallback");
             return;
         }
-        getActivity().runOnUiThread(() -> {
-            android.view.Window window = getActivity().getWindow();
-            if (window == null) {
-                call.reject("PageMe screen is unavailable");
-                return;
+        setTorchWithPermission(call, null);
+    }
+
+    @PermissionCallback
+    public void cameraPermissionCallback(PluginCall call) {
+        endRuntimePermissionFlow();
+        if (getPermissionState("camera") != PermissionState.GRANTED) {
+            call.reject("Camera permission is required to use the rear torch");
+            return;
+        }
+        setTorchWithPermission(call, null);
+    }
+
+    @PluginMethod
+    public void setTorch(PluginCall call) {
+        boolean enabled = call.getBoolean("enabled", false);
+        if (enabled && getPermissionState("camera") != PermissionState.GRANTED) {
+            call.reject("Camera permission is required to use the rear torch");
+            return;
+        }
+        if (!enabled && getPermissionState("camera") != PermissionState.GRANTED) {
+            isTorchOn = false;
+            JSObject result = new JSObject();
+            result.put("isOn", false);
+            call.resolve(result);
+            return;
+        }
+        setTorchWithPermission(call, enabled);
+    }
+
+    @PluginMethod
+    public void getTorchState(PluginCall call) {
+        JSObject result = new JSObject();
+        result.put("isOn", isTorchOn);
+        call.resolve(result);
+    }
+
+    private void setTorchWithPermission(PluginCall call, Boolean requestedState) {
+        Context context = getContext().getApplicationContext();
+        TORCH_EXECUTOR.execute(() -> {
+            try {
+                android.hardware.camera2.CameraManager cameraManager =
+                    (android.hardware.camera2.CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
+                String cameraId = activeTorchCameraId != null
+                    ? activeTorchCameraId : findTorchCameraId(cameraManager);
+                if (cameraManager == null || cameraId == null) {
+                    call.reject("No rear camera flash is available");
+                    return;
+                }
+                boolean targetState = requestedState == null ? !isTorchOn : requestedState;
+                cameraManager.setTorchMode(cameraId, targetState);
+                activeTorchCameraId = cameraId;
+                isTorchOn = targetState;
+                JSObject result = new JSObject();
+                result.put("isOn", targetState);
+                call.resolve(result);
+            } catch (SecurityException e) {
+                isTorchOn = false;
+                call.reject("Camera permission is required to use the rear torch", e);
+            } catch (Exception e) {
+                isTorchOn = false;
+                android.util.Log.e("PageMeReceiver", "Failed to change rear torch", e);
+                call.reject("Rear torch is unavailable: " + e.getMessage(), e);
             }
-            android.view.WindowManager.LayoutParams params = window.getAttributes();
-            params.screenBrightness = enabled
-                ? android.view.WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_FULL
-                : android.view.WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE;
-            window.setAttributes(params);
-            JSObject ret = new JSObject();
-            ret.put("isOn", enabled);
-            call.resolve(ret);
+        });
+    }
+
+    private static String findTorchCameraId(android.hardware.camera2.CameraManager cameraManager)
+            throws android.hardware.camera2.CameraAccessException {
+        if (cameraManager == null) return null;
+        String firstFlashCamera = null;
+        for (String cameraId : cameraManager.getCameraIdList()) {
+            android.hardware.camera2.CameraCharacteristics characteristics =
+                cameraManager.getCameraCharacteristics(cameraId);
+            Boolean hasFlash = characteristics.get(
+                android.hardware.camera2.CameraCharacteristics.FLASH_INFO_AVAILABLE);
+            if (!Boolean.TRUE.equals(hasFlash)) continue;
+            if (firstFlashCamera == null) firstFlashCamera = cameraId;
+            Integer facing = characteristics.get(
+                android.hardware.camera2.CameraCharacteristics.LENS_FACING);
+            if (facing != null && facing ==
+                    android.hardware.camera2.CameraCharacteristics.LENS_FACING_BACK) {
+                return cameraId;
+            }
+        }
+        return firstFlashCamera;
+    }
+
+    public static void turnOffTorch(Context context) {
+        Context appContext = context.getApplicationContext();
+        TORCH_EXECUTOR.execute(() -> {
+            if (!isTorchOn) return;
+            try {
+                android.hardware.camera2.CameraManager cameraManager =
+                    (android.hardware.camera2.CameraManager) appContext.getSystemService(Context.CAMERA_SERVICE);
+                String cameraId = activeTorchCameraId != null
+                    ? activeTorchCameraId : findTorchCameraId(cameraManager);
+                if (cameraManager != null && cameraId != null) {
+                    cameraManager.setTorchMode(cameraId, false);
+                }
+            } catch (Exception e) {
+                android.util.Log.w("PageMeReceiver", "Failed to turn off rear torch", e);
+            } finally {
+                isTorchOn = false;
+            }
         });
     }
 
