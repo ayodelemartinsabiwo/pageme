@@ -24,6 +24,6 @@ cd android
 
 Serve `pageme-site/` with any static web server. The website does not share build dependencies with the mobile application.
 
-## Android releases
+## Google Play releases
 
-Local APKs are excluded from Git. Public-facing beta distribution now routes through Google Play testing; GitHub release assets remain an archive for signed builds and are not copied into the Pages deployment. Release signing and privacy checks are documented in `pageme-mobile/docs/RELEASE_AND_PRIVACY_NOTES.md`.
+Public beta access is distributed through Google Play testing. Release signing and privacy checks are documented in `pageme-mobile/docs/RELEASE_AND_PRIVACY_NOTES.md`.

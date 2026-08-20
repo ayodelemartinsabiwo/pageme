@@ -206,23 +206,19 @@ button { font: inherit; }
   cursor: default;
   transform: none;
 }
-.button-icon { font-size: 22px; line-height: 1; }
-.store-icon {
-  width: 24px;
-  height: 24px;
-  display: inline-grid;
-  place-items: center;
-  flex: 0 0 24px;
-  border: 1px solid rgba(9, 11, 9, .35);
-  border-radius: 4px;
-  font-size: 12px;
+.play-badge-link {
+  display: inline-block;
+  width: 210px;
+  border-radius: 6px;
+  transition: opacity .18s, transform .18s;
 }
+.play-badge-link img { width: 100%; height: auto; }
+.play-badge-link:hover { transform: translateY(-2px); }
+.play-badge-link:focus-visible { outline: 2px solid var(--paper); outline-offset: 4px; }
+.play-badge-link.is-disabled { opacity: .45; cursor: default; }
+.play-badge-link.is-disabled:hover { transform: none; }
 .text-link { color: var(--paper); font-size: 14px; text-underline-offset: 5px; }
 .text-link span { color: var(--lime); }
-.release-facts { display: flex; gap: 36px; margin: 34px 0 0; }
-.release-facts div { min-width: 92px; }
-.release-facts dt { color: var(--muted); font-size: 10px; text-transform: uppercase; }
-.release-facts dd { margin: 2px 0 0; color: var(--paper); font-size: 13px; }
 .hero-next {
   position: absolute;
   z-index: 2;
@@ -332,7 +328,7 @@ button { font: inherit; }
 .install-steps h3 { margin: 0 0 8px; font-size: 20px; }
 .install-steps p { margin: 0; color: var(--muted); font-size: 14px; }
 .install-actions { grid-column: 2; }
-.install-actions .button { width: 100%; }
+.install-actions .play-badge-link { display: block; margin: 0 auto; }
 .install-actions p { margin: 12px 0 0; color: var(--muted); font-size: 11px; text-align: center; }
 .install-actions .access-note {
   max-width: 680px;
@@ -460,12 +456,8 @@ button { font: inherit; }
   .hero-actions { align-items: stretch; flex-direction: column; gap: 12px; margin-top: 21px; }
   .button { width: 100%; }
   .button { min-height: 48px; padding: 11px 15px; font-size: 13px; }
-  .button-icon { font-size: 19px; }
+  .play-badge-link { width: 184px; align-self: center; }
   .text-link { text-align: center; }
-  .release-facts { gap: 10px; justify-content: space-between; margin-top: 25px; }
-  .release-facts div { min-width: 0; }
-  .release-facts dt { font-size: 8px; }
-  .release-facts dd { font-size: 11px; }
   .hero-next { bottom: 14px; font-size: 9px; }
   .section { padding: 68px 20px; }
   .section-heading { max-width: 34rem; margin-bottom: 34px; }
