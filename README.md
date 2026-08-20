@@ -3,7 +3,7 @@
 PageMe is a public source-available monorepo organized as two separate projects:
 
 - `pageme-mobile/` contains the React, Capacitor, Android, Apps Script backend, tests, and mobile release documentation.
-- `pageme-site/` contains the public landing page and Android beta download experience.
+- `pageme-site/` contains the public landing page and Google Play beta access experience.
 
 The GitHub Pages workflow at `.github/workflows/deploy-pages.yml` publishes only `pageme-site/`.
 
@@ -26,4 +26,4 @@ Serve `pageme-site/` with any static web server. The website does not share buil
 
 ## Android releases
 
-Local APKs are excluded from Git. Public beta builds are release-signed and distributed through GitHub Releases; the landing page links to the verified release asset. Release signing and privacy checks are documented in `pageme-mobile/docs/RELEASE_AND_PRIVACY_NOTES.md`.
+Local APKs are excluded from Git. Public-facing beta distribution now routes through Google Play testing; GitHub release assets remain an archive for signed builds and are not copied into the Pages deployment. Release signing and privacy checks are documented in `pageme-mobile/docs/RELEASE_AND_PRIVACY_NOTES.md`.

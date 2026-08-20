@@ -26,17 +26,10 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-      - name: Prepare verified beta download
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Prepare website
         run: |
-          mkdir -p pageme-site-dist/downloads
+          mkdir -p pageme-site-dist
           cp -R pageme-site/. pageme-site-dist/
-          gh release download v1.3.13-beta.1 \
-            --repo "${{ github.repository }}" \
-            --pattern PageMe-Android.apk \
-            --dir pageme-site-dist/downloads
-          echo "d2eadaf111fd0918ab5affc89d5e067e2292cd26d27a3ad5634c20d243161f5f  pageme-site-dist/downloads/PageMe-Android.apk" | sha256sum --check
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload static site

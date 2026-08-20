@@ -1,4 +1,4 @@
-# PageMe download site
+# PageMe website
 
 This is a static website and can be served directly by GitHub Pages.
 
@@ -12,18 +12,12 @@ python -m http.server 4173
 
 ## Download configuration
 
-`site-config.js` controls whether downloads are enabled as well as the APK URL, visible build number, size, and SHA-256 checksum. The current public download is a same-origin GitHub Pages mirror of the release-signed B26 beta.
+`site-config.js` controls Google Play beta availability, the active testing URL, visible build number, testing status, and access level. The current B26 link is an Internal Testing invitation and therefore works only for Google accounts included in the Play tester list.
 
-For each new distribution, upload a release-signed APK named `PageMe-Android.apk` to a GitHub Release. Then update the tag and expected checksum in `.github/workflows/deploy-pages.yml`. The workflow downloads the release asset, rejects it if its checksum differs, and includes the verified APK in the Pages artifact without committing the binary to Git.
+When Google unlocks Open Testing, replace `downloadUrl`, set `publicTestingAvailable` to `true`, and update the access/status copy in `site-config.js`. No page markup change is required.
 
-Keep the website URL same-origin:
+GitHub Releases remains the archive for signed builds. GitHub Pages publishes only the static website; installation is handled by Google Play.
 
-```text
-downloads/PageMe-Android.apk
-```
+## Play beta signing
 
-GitHub Releases remains the source of truth and archive for signed builds. GitHub Pages serves the current verified beta directly to Android browsers.
-
-## Public beta signing
-
-The public B26 APK uses the dedicated PageMe beta signing key. The keystore and credentials remain excluded from source control and must be backed up securely. Configure the four `PAGEME_KEYSTORE_*` environment variables documented in `../pageme-mobile/docs/RELEASE_AND_PRIVACY_NOTES.md`, build the release APK, verify its signature, and publish its checksum. Do not use Android's shared debug key for a public release.
+The B26 Android App Bundle uses the dedicated PageMe beta signing key and Google Play App Signing. The local keystore and credentials remain excluded from source control and must be backed up securely. Configure the four `PAGEME_KEYSTORE_*` environment variables documented in `../pageme-mobile/docs/RELEASE_AND_PRIVACY_NOTES.md`, build the release bundle, and verify its signature before uploading it to Play Console. Do not use Android's shared debug key for a Play release.

@@ -1,8 +1,13 @@
 window.PAGEME_SITE_CONFIG = {
   downloadAvailable: true,
-  downloadUrl: "downloads/PageMe-Android.apk",
+  downloadUrl: "https://play.google.com/apps/internaltest/4701511113601505278",
+  downloadLabel: "Get it on Google Play",
+  distributionChannel: "Google Play",
+  testStatus: "Internal beta live",
+  testAccess: "Invited testers",
+  accessNote: "Google Play currently limits this test to invited accounts. Public Open Testing will replace this link after Google grants production access.",
+  publicTestingAvailable: false,
   version: "B26 Beta",
   versionName: "1.3.13",
-  size: "1.1 MB",
-  sha256: "D2EADAF111FD0918AB5AFFC89D5E067E2292CD26D27A3AD5634C20D243161F5F"
+  versionCode: 26
 };

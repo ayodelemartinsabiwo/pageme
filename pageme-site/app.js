@@ -15,12 +15,16 @@
       const resolvedUrl = new URL(link.href, window.location.href);
       if (resolvedUrl.origin === window.location.origin) {
         link.setAttribute("download", "PageMe-Android.apk");
+        link.removeAttribute("target");
+        link.removeAttribute("rel");
       } else {
         link.removeAttribute("download");
+        link.setAttribute("target", "_blank");
+        link.setAttribute("rel", "noopener");
       }
       link.removeAttribute("aria-disabled");
       link.classList.remove("is-disabled");
-      if (label && link.dataset.availableLabel) label.textContent = link.dataset.availableLabel;
+      if (label) label.textContent = config.downloadLabel || link.dataset.availableLabel || "Download";
       return;
     }
 
@@ -32,6 +36,19 @@
   });
   document.querySelectorAll("[data-release-version]").forEach((node) => {
     if (config.version) node.textContent = config.version;
+  });
+  document.querySelectorAll("[data-release-channel]").forEach((node) => {
+    if (config.distributionChannel) node.textContent = config.distributionChannel;
+  });
+  document.querySelectorAll("[data-test-status]").forEach((node) => {
+    if (config.testStatus) node.textContent = config.testStatus;
+  });
+  document.querySelectorAll("[data-test-access]").forEach((node) => {
+    if (config.testAccess) node.textContent = config.testAccess;
+  });
+  document.querySelectorAll("[data-access-note]").forEach((node) => {
+    if (config.accessNote) node.textContent = config.accessNote;
+    node.classList.toggle("is-public", config.publicTestingAvailable === true);
   });
   document.querySelectorAll("[data-release-size]").forEach((node) => {
     if (config.size) node.textContent = config.size;
