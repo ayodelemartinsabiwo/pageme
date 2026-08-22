@@ -2,6 +2,8 @@
 
 This is a static website and can be served directly by GitHub Pages.
 
+The visual user guide is published at `guide.html`. Its chapters and stable deep links are defined in `guide-data.js`; screenshots live in `assets/guide/`.
+
 ## Local preview
 
 From this directory, run a static server and open the printed URL:

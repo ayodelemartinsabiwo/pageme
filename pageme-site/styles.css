@@ -95,6 +95,7 @@ button { font: inherit; }
 .site-nav { display: flex; align-items: center; gap: 28px; font-size: 13px; }
 .site-nav a { color: var(--muted); text-decoration: none; }
 .site-nav a:hover, .site-nav a:focus-visible { color: var(--paper); }
+.site-nav a[aria-current="page"] { color: var(--paper); }
 .site-nav .nav-download {
   padding: 9px 13px;
   color: var(--ink);
@@ -369,6 +370,9 @@ button { font: inherit; }
 .privacy-main p, .privacy-main li { color: var(--muted); }
 .privacy-main li + li { margin-top: 10px; }
 .privacy-meta { color: var(--lime) !important; font-family: "Silkscreen", monospace; font-size: 10px; }
+.compact-header-links { display: flex; align-items: center; gap: 22px; font-size: 12px; }
+.compact-header-links > a:first-child { color: var(--muted); }
+.compact-header-links > a:first-child:hover { color: var(--paper); }
 
 @media (max-width: 840px) {
   :root { --header-height: 58px; }
@@ -443,6 +447,7 @@ button { font: inherit; }
 
 @media (max-width: 600px) {
   .site-header > .text-link { font-size: 12px; }
+  .compact-header-links { gap: 12px; font-size: 10px; }
   .hero { min-height: calc(100svh - 28px); align-items: center; }
   .hero-media img { right: -18%; top: 0; height: 100%; opacity: .36; }
   .hero-shade { background: rgba(5, 7, 5, .75); }
