@@ -94,32 +94,6 @@
   box-shadow: 0 28px 70px rgba(0, 0, 0, .34);
 }
 .guide-image-wrap img { width: 100%; height: auto; object-fit: contain; }
-.guide-hotspots { position: absolute; inset: 0; pointer-events: none; }
-.guide-hotspot {
-  position: absolute;
-  width: 30px;
-  height: 30px;
-  display: inline-grid;
-  place-items: center;
-  padding: 0;
-  transform: translate(-50%, -50%);
-  border: 2px solid #0d1309;
-  border-radius: 50%;
-  background: var(--lime);
-  color: #0b0f08;
-  font-family: "Silkscreen", monospace;
-  font-size: 9px;
-  font-weight: 700;
-  line-height: 1;
-  box-shadow: 0 0 0 3px rgba(241, 240, 232, .88), 0 4px 14px rgba(0,0,0,.55);
-  pointer-events: auto;
-  cursor: pointer;
-}
-.guide-hotspot:hover, .guide-hotspot:focus-visible, .guide-hotspot.is-active {
-  background: var(--amber);
-  box-shadow: 0 0 0 4px #fff, 0 0 22px rgba(239, 181, 75, .6);
-  outline: 0;
-}
 .guide-visual figcaption { max-width: 390px; margin: 12px auto 0; color: #7f857b; font-size: 10px; }
 .guide-instructions { min-width: 0; }
 .guide-instructions h3 { margin: 0 0 16px; color: #cbd0c5; font-size: 12px; text-transform: uppercase; }
@@ -134,7 +108,6 @@
   border: 1px solid transparent;
   border-radius: 7px;
   color: var(--muted);
-  cursor: pointer;
 }
 .guide-instructions li > span {
   width: 30px;
@@ -148,13 +121,12 @@
   font-size: 9px;
 }
 .guide-instructions li p { margin: 1px 0 0; font-size: 13px; line-height: 1.55; }
-.guide-instructions li:hover, .guide-instructions li:focus-visible, .guide-instructions li.is-active {
+.guide-instructions li {
   border-color: #3c4538;
   background: #151916;
   color: var(--paper);
-  outline: 0;
 }
-.guide-instructions li.is-active > span { border-color: var(--amber); background: var(--amber); color: var(--ink); }
+.guide-instructions li > span { border-color: var(--lime); }
 .guide-note {
   margin-top: 18px;
   padding: 14px 15px;
@@ -232,7 +204,6 @@
   .guide-instructions { margin-top: 24px; }
   .guide-instructions li { min-height: 58px; padding: 11px 10px; }
   .guide-instructions li p { font-size: 12px; line-height: 1.55; }
-  .guide-hotspot { width: 27px; height: 27px; font-size: 8px; }
   .guide-pager { grid-template-columns: 1fr 1fr; }
   .guide-all-link { grid-column: 1 / -1; grid-row: 2; justify-self: center; }
   .guide-nav-button { width: 100%; padding: 9px; font-size: 12px; }
@@ -245,8 +216,4 @@
   .guide-workspace { padding-top: 16px; }
   .guide-instructions li { grid-template-columns: 28px minmax(0, 1fr); gap: 10px; }
   .guide-instructions li > span { width: 27px; height: 27px; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .guide-hotspot { transition: none; }
 }
