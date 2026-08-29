@@ -88,9 +88,9 @@
     },
     compose: {
       index: "02 / COMPOSE",
-      title: "Send the message. Keep the boundary.",
-      copy: "Compose a PageMe message or reply to a captured conversation from the pager interface.",
-      detail: "The themed keyboard includes cursor navigation, so editing stays practical without sending you back to the full phone experience.",
+      title: "Page a person by UCN.",
+      copy: "Enter another registered user's Unique Code Number to send a direct PageMe page without exchanging phone numbers.",
+      detail: "Direct pages stay grouped by UCN with replies and delivery state, while the themed keyboard keeps editing inside the focused interface.",
       screen: '<div class="lcd-list"><div class="lcd-row"><span>TO:</span><span>BEN-001</span></div><div class="lcd-row"><span>MSG:</span><span>ON MY WAY</span></div><div class="lcd-row active"><span>SEND PAGE</span><span>></span></div></div>'
     },
     focus: {

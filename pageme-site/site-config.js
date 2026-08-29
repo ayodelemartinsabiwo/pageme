@@ -1,9 +1,10 @@
 window.PAGEME_SITE_CONFIG = {
   downloadAvailable: true,
-  downloadUrl: "https://play.google.com/apps/internaltest/4701511113601505278",
-  downloadLabel: "Get it on Google Play",
-  testStatus: "Available on Google Play",
-  testAccess: "Invitation beta",
-  accessNote: "The current Google Play beta is invitation-only while PageMe completes Google's required testing review.",
-  publicTestingAvailable: false
+  downloadUrl: "https://play.google.com/apps/testing/com.pageme.app",
+  downloadLabel: "Join the Google Play beta",
+  testStatus: "Closed testing on Google Play",
+  testAccess: "Invitation-only beta",
+  accessNote: "PageMe is currently available to invited closed testers. Public Google Play access is not open yet.",
+  publicTestingAvailable: false,
+  publicDownloadUrl: "https://play.google.com/store/apps/details?id=com.pageme.app"
 };

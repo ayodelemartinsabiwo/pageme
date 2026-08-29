@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1270, initial-scale=1">
+  <title>PageMe Product Hunt Media</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 1270px; height: 760px; overflow: hidden; background: #090b09; }
+    body { color: #f3f4ed; font-family: "Courier New", monospace; }
+    .slide { position: relative; display: none; width: 1270px; height: 760px; padding: 66px 76px; overflow: hidden; background-color: #090b09; background-image: linear-gradient(#1a1f1a 1px, transparent 1px), linear-gradient(90deg, #1a1f1a 1px, transparent 1px); background-size: 38px 38px; }
+    body[data-slide="focused"] #slide-focused,
+    body[data-slide="ucn"] #slide-ucn,
+    body[data-slide="communication"] #slide-communication,
+    body[data-slide="automation"] #slide-automation { display: grid; }
+    .brand { position: absolute; top: 34px; left: 76px; display: flex; align-items: center; gap: 14px; font-size: 17px; font-weight: 700; letter-spacing: 3px; }
+    .brand img { width: 34px; height: 34px; border-radius: 4px; }
+    .index { position: absolute; top: 42px; right: 76px; color: #9ba196; font-size: 14px; }
+    .copy { align-self: center; position: relative; z-index: 2; }
+    .eyebrow { margin: 0 0 20px; color: #b7de49; font-size: 14px; font-weight: 700; letter-spacing: 2px; }
+    h1 { margin: 0; max-width: 650px; font-size: 64px; line-height: 1.02; letter-spacing: 0; }
+    .summary { max-width: 620px; margin: 26px 0 0; color: #c1c5bc; font-size: 22px; line-height: 1.5; }
+    .signal { display: inline-flex; align-items: center; gap: 10px; margin-top: 30px; color: #f3f4ed; font-size: 15px; }
+    .signal::before { content: ""; width: 10px; height: 10px; background: #e85b4d; border-radius: 50%; box-shadow: 0 0 16px #e85b4d; }
+    .phone { position: relative; width: 250px; height: 542px; padding: 10px; overflow: hidden; background: #171a17; border: 1px solid #3f473c; border-radius: 8px; box-shadow: 0 30px 70px rgba(0,0,0,.48); }
+    .phone img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
+    .phone-label { position: absolute; right: 18px; bottom: 16px; padding: 8px 10px; color: #090b09; background: #b7de49; border-radius: 4px; font-size: 13px; font-weight: 700; }
+    .focused { grid-template-columns: 1.08fr .92fr; align-items: center; }
+    .focused .visual { justify-self: center; transform: rotate(2deg); }
+    .focused .mark { position: absolute; right: 36px; top: 64px; width: 112px; height: 112px; opacity: .18; }
+    .ucn { grid-template-columns: .92fr 1.08fr; align-items: center; }
+    .ucn .phones { display: flex; align-items: center; justify-content: flex-end; gap: 22px; }
+    .ucn .phone:first-child { transform: translateY(-24px); }
+    .ucn .phone:last-child { transform: translateY(24px); }
+    .ucn-route { display: inline-flex; align-items: center; gap: 12px; margin-top: 28px; color: #b7de49; font-size: 20px; font-weight: 700; }
+    .ucn-route span { padding: 9px 12px; border: 1px solid #61772d; border-radius: 4px; }
+    .ucn-route b { color: #54a8d8; }
+    .communication, .automation { grid-template-rows: auto 1fr; }
+    .wide-head { display: flex; align-items: end; justify-content: space-between; gap: 48px; margin-top: 34px; }
+    .wide-head h1 { max-width: 700px; font-size: 52px; }
+    .wide-head .summary { max-width: 390px; margin: 0; font-size: 18px; }
+    .phone-row { display: flex; align-items: end; justify-content: flex-end; gap: 28px; margin-top: 26px; }
+    .phone-row .phone { width: 190px; height: 412px; }
+    .phone-row .phone:nth-child(2) { transform: translateY(-18px); }
+    .phone-row .phone:nth-child(4) { transform: translateY(-10px); }
+    .feature-note { position: absolute; left: 76px; bottom: 48px; max-width: 245px; color: #c1c5bc; font-size: 16px; line-height: 1.5; }
+    .feature-note strong { display: block; margin-bottom: 8px; color: #54a8d8; font-size: 13px; letter-spacing: 1px; }
+    .automation .feature-note strong { color: #e6b34e; }
+  </style>
+</head>
+<body>
+  <section class="slide focused" id="slide-focused">
+    <div class="brand"><img src="../assets/images/pageme-mark.png" alt="">PAGE.ME</div><div class="index">01 / FOCUSED PAGER</div>
+    <div class="copy"><p class="eyebrow">YOUR ATTENTION IS YOURS</p><h1>Turn your Android into a focused pager.</h1><p class="summary">Keep calls, messages, and useful tools. Put distracting launchers, feeds, and recommendations out of sight.</p><p class="signal">FREE ANDROID BETA</p></div>
+    <div class="visual phone"><img src="../assets/guide/home.webp" alt=""><span class="phone-label">PAGER MODE</span></div>
+    <img class="mark" src="../assets/images/pageme-mark.png" alt="">
+  </section>
+
+  <section class="slide ucn" id="slide-ucn">
+    <div class="brand"><img src="../assets/images/pageme-mark.png" alt="">PAGE.ME</div><div class="index">02 / UCN PAGES</div>
+    <div class="copy"><p class="eyebrow">PAGE PEOPLE, NOT PHONE NUMBERS</p><h1>A PageMe address of your own.</h1><p class="summary">Every registered user receives a Unique Code Number for direct PageMe-to-PageMe conversations.</p><div class="ucn-route"><span>AMI-204</span><b>→</b><span>BEN-001</span></div></div>
+    <div class="phones"><div class="phone"><img src="../assets/guide/compose.webp" alt=""><span class="phone-label">TO / BEN-001</span></div><div class="phone"><img src="../assets/guide/read.webp" alt=""><span class="phone-label">FROM / AMI-204</span></div></div>
+  </section>
+
+  <section class="slide communication" id="slide-communication">
+    <div class="brand"><img src="../assets/images/pageme-mark.png" alt="">PAGE.ME</div><div class="index">03 / COMMUNICATION</div>
+    <div class="wide-head"><div><p class="eyebrow">KEEP THE SIGNAL</p><h1>Messages become readable pages.</h1></div><p class="summary">Group SMS, WhatsApp, and direct PageMe conversations by sender. Reply without opening the distracting source app where Android supports it.</p></div>
+    <div class="phone-row"><div class="phone"><img src="../assets/guide/inbox-categories.webp" alt=""></div><div class="phone"><img src="../assets/guide/inbox-senders.webp" alt=""></div><div class="phone"><img src="../assets/guide/inbox-messages.webp" alt=""></div><div class="phone"><img src="../assets/guide/read.webp" alt=""></div></div>
+    <p class="feature-note"><strong>ONE SOURCE / ONE CONVERSATION</strong>Repeated alerts stay grouped and duplicate pages are filtered before they fill the inbox.</p>
+  </section>
+
+  <section class="slide automation" id="slide-automation">
+    <div class="brand"><img src="../assets/images/pageme-mark.png" alt="">PAGE.ME</div><div class="index">04 / FOCUS AUTOMATION</div>
+    <div class="wide-head"><div><p class="eyebrow">FOCUS CAN ARRIVE ON SCHEDULE</p><h1>Start deliberately. Return safely.</h1></div><p class="summary">Use a timer, one-time or weekly schedule, or matching calendar event. Approved study apps, alarms, and emergency access stay available.</p></div>
+    <div class="phone-row"><div class="phone"><img src="../assets/guide/timer.webp" alt=""></div><div class="phone"><img src="../assets/guide/focus-active.webp" alt=""></div><div class="phone"><img src="../assets/guide/schedule.webp" alt=""></div><div class="phone"><img src="../assets/guide/study.webp" alt=""></div></div>
+    <p class="feature-note"><strong>STRICT ENOUGH TO HELP</strong>Pager Mode changes the active Home experience instead of showing another blocked-app screen.</p>
+  </section>
+
+  <script>document.body.dataset.slide = new URLSearchParams(location.search).get("slide") || "focused";</script>
+</body>
+</html>

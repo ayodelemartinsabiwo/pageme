@@ -27,6 +27,15 @@ window.PAGEME_GUIDE = [
     ]
   },
   {
+    id: "ucn-pages", title: "UCN Pages", shortTitle: "UCN Pages",
+    steps: [
+      { id: "understand-your-ucn", title: "Understand and keep your UCN", image: "registration.webp", alt: "PageMe registration screen where a fictional user creates a Unique Code Number", instructions: ["UCN means Unique Code Number. It is the PageMe address created for every registered account.", "Keep the UCN sent to your registered email; PageMe also uses it when restoring your account.", "Share the UCN only with people you want to receive direct PageMe pages from."], hotspots: [{x:50,y:29},{x:50,y:82},{x:50,y:91}], note: "A UCN identifies a PageMe account. It does not reveal the account holder's email address or phone number." },
+      { id: "send-to-ucn", title: "Send a direct page by UCN", image: "compose.webp", alt: "PageMe Compose screen used to address a direct page to a fictional recipient", instructions: ["Press COMPOSE and enter the recipient's complete UCN in TO.", "Write the message in MSG, choose text or pager-code mode, and press SEND.", "PageMe authenticates the sender and delivers the page to the registered recipient's PageMe inbox."], hotspots: [{x:48,y:22},{x:50,y:35},{x:49,y:92}], note: "The recipient must already have a registered PageMe account and a valid UCN." },
+      { id: "receive-and-reply", title: "Receive, reply, and check status", image: "read.webp", alt: "A direct PageMe message from a fictional sender with the reply action available", instructions: ["Open the PAGEME inbox category and choose the sender UCN.", "Read the page and press SEND when REPLY appears.", "Messages you send can show sent, delivered, or read state as the receiving account synchronizes."], hotspots: [{x:50,y:19},{x:50,y:48},{x:50,y:92}] },
+      { id: "group-and-protect", title: "Keep conversations grouped and safe", image: "inbox-messages.webp", alt: "PageMe inbox showing messages grouped inside one fictional sender conversation", instructions: ["Pages from the same UCN stay inside one conversation instead of creating separate sender rows.", "Open the message actions when you need to block a UCN or report an unwanted page.", "Clearing your PageMe inbox removes your copy; account deletion removes the associated account data described in the Privacy Policy."], hotspots: [{x:50,y:19},{x:50,y:43},{x:50,y:91}], note: "UCN pages use authenticated HTTPS delivery and server-side retention. PageMe does not claim end-to-end encryption." }
+    ]
+  },
+  {
     id: "focus-timer", title: "Focus Timer", shortTitle: "Focus Timer",
     steps: [
       { id: "duration", title: "Choose a focus duration", image: "timer.webp", alt: "PageMe Focus Timer showing duration choices with one hour selected", instructions: ["Press FOCUS TIMER.", "Select a preset duration or choose Custom to enter minutes.", "Press the amber action key to continue."], hotspots: [{x:50,y:70},{x:50,y:31},{x:50,y:92}] },
