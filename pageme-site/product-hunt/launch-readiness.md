@@ -11,7 +11,7 @@ The Product Hunt post must remain a local draft until every launch gate is check
 
 ## Live UCN acceptance
 
-- [ ] Two separately registered accounts can exchange UCN pages in both directions.
+- [x] Two separately registered accounts can exchange UCN pages in both directions. Verified live on 2026-08-30 between the SM-A566B and `PageMe_API_36`, with delivery/read timestamps and a reply recorded.
 - [ ] Foreground, background, offline/reconnect, and app-restart delivery pass.
 - [ ] Every page appears exactly once in the correct UCN conversation.
 - [ ] Replies and sent, delivered, and read states synchronize correctly.
