@@ -23,3 +23,7 @@
 # Capacitor discovers custom bridge plugins through runtime annotations.
 -keep @com.getcapacitor.annotation.CapacitorPlugin class * { *; }
 -keepattributes RuntimeVisibleAnnotations,AnnotationDefault
+
+# Firebase Installations accesses the DataStore Android delegate from a
+# background thread during startup. Keep the implementation in minified builds.
+-keep class androidx.datastore.preferences.** { *; }

@@ -1,5 +1,14 @@
 # Release and Privacy Notes
 
+## Status sharing and beta measurement
+
+- Share Status is optional. Public status pages are anonymous and links expire with a focus session, on Pager Mode exit, or after four hours for untimed status.
+- The backend stores only a hash of each status token. Account deletion removes status links and related product events.
+- First-party product events are limited to activation, focus, link, Compose-entry, and status-page delivery events. They contain no page text, UCN, email, phone number, contact, notification content, selected app, or calendar title.
+- Raw product events are retained for up to 90 days and are then aggregated or deleted.
+- UCN pages use authenticated HTTPS delivery and must not be marketed as end-to-end encrypted.
+- Google Play Data Safety answers must be reviewed before the status-sharing bundle is promoted beyond closed testing.
+
 ## Local verification
 
 Run the web checks before syncing Android:
@@ -28,7 +37,7 @@ directory. Back up both the keystore and its credentials file to a secure,
 access-controlled location. Every future update to the direct-download beta
 must use the same key or Android will reject it as an upgrade.
 
-The current beta build is version `1.3.13` (`versionCode 26`, build B26), supports Android 8.0 and later, and targets API 35. Google Play requires API 35 for mobile submissions at the time of this release work and raises the requirement to API 36 on August 31, 2026. Upgrade and retest before submitting on or after that date.
+The current beta build is version `1.3.18` (`versionCode 31`, build B31), supports Android 8.0 and later, and targets Android 16 (API 36). Google Play requires API 36 for mobile app updates from August 31, 2026.
 
 ## Production preflight
 

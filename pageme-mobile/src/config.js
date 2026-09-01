@@ -3,7 +3,7 @@
 
 export const PAGEME_SCRIPT_URL =
   import.meta.env?.VITE_PAGEME_SCRIPT_URL ||
-  "https://script.google.com/macros/s/AKfycbz76J8Oaz3ZolAbw7UWCwr35uZnrW6UI8J5wNb2ykdDr5P2-SH0h0bYx8Lr32fYt4XoEw/exec";
+  "https://script.google.com/macros/s/AKfycbw2uz6k9hZmXZAfBK_47yK1Sy8CP55c8sQ9x8sjl21L9KbLM-oQ1mLA1t-l66mWLS4L0A/exec";
 
 export const REQUIRE_SERVER_SESSION =
   import.meta.env?.VITE_PAGEME_REQUIRE_SERVER_SESSION !== 'false';

@@ -5,7 +5,9 @@ import { blip } from './audio.js';
 import { COUNTRIES } from './data.jsx';
 import { postPageMe } from './api.js';
 import { REQUIRE_SERVER_SESSION } from './config.js';
-import { clearSessionToken, sessionTokenFromResponse, storeSessionToken } from './identity.js';
+import { clearSessionTokenSecure, sessionTokenFromResponse, storeSessionTokenSecure } from './identity.js';
+import { STATUS_SHARE_ONBOARDING_KEY, shouldOfferActivationShare } from './status-sharing.js';
+import { verificationFailureFromResponse } from './verification.js';
 
 function Toggle({ label, sub, on, onClick, disabled = false }) {
   return (
@@ -40,7 +42,7 @@ function PermissionAction({ label, sub, ready, onClick, disabled = false }) {
   );
 }
 
-export function ActivationScreen({ onActivate, soundOn, reAuthMode = false }) {
+export function ActivationScreen({ onActivate, onShareStatus, soundOn, reAuthMode = false }) {
   const isReturningUser = () => !!(
     localStorage.getItem("pageme_user_name") &&
     localStorage.getItem("pageme_user_email") &&
@@ -63,6 +65,9 @@ export function ActivationScreen({ onActivate, soundOn, reAuthMode = false }) {
     calendar: false,
     reminderNotifications: false,
   });
+  const [statusShareBusy, setStatusShareBusy] = React.useState(false);
+  const [statusShareError, setStatusShareError] = React.useState("");
+  const [statusShared, setStatusShared] = React.useState(false);
   const [permissionAction, setPermissionAction] = React.useState("");
   const permissionCheckSequence = React.useRef(0);
   const permissionRefreshTimer = React.useRef(null);
@@ -81,6 +86,9 @@ export function ActivationScreen({ onActivate, soundOn, reAuthMode = false }) {
   const [restoreUcn, setRestoreUcn] = React.useState("");
   const [restoreEmail, setRestoreEmail] = React.useState("");
   const [restoreLoading, setRestoreLoading] = React.useState(false);
+  const [verification, setVerification] = React.useState(null);
+  const [verificationCode, setVerificationCode] = React.useState("");
+  const [verificationLoading, setVerificationLoading] = React.useState(false);
 
   const [installedApps, setInstalledApps] = React.useState([]);
   const [loadingApps, setLoadingApps] = React.useState(false);
@@ -99,6 +107,63 @@ export function ActivationScreen({ onActivate, soundOn, reAuthMode = false }) {
     setErrorMsg("");
   };
 
+  const finalizeRestore = async (res, fallbackUcn) => {
+    if (!res || res.status !== "success" || !res.name) {
+      throw new Error(res?.error || "UCN not found. Please check your code.");
+    }
+    const sessionToken = sessionTokenFromResponse(res);
+    if (REQUIRE_SERVER_SESSION && !sessionToken) {
+      throw new Error("PageMe server must be upgraded before this account can sign in securely.");
+    }
+    if (sessionToken && !(await storeSessionTokenSecure(sessionToken))) {
+      throw new Error("PageMe could not protect this session on your device.");
+    }
+    localStorage.setItem("pageme_user_name", res.name);
+    localStorage.setItem("pageme_user_email", res.email || "");
+    localStorage.setItem("pageme_cap_code", res.capCode || fallbackUcn);
+    if (res.profile) localStorage.setItem("pageme_user_profile", JSON.stringify(res.profile));
+    blip({ freq: 1600, dur: 0.1, vol: 0.12, enabled: soundOn });
+    if (reAuthMode) {
+      localStorage.removeItem("pageme_setup_step");
+      onActivate(res.settings || null);
+      return;
+    }
+    setPrevStep(6);
+    const nextStep = 3;
+    localStorage.setItem("pageme_setup_step", String(nextStep));
+    setStep(nextStep);
+  };
+
+  const finalizeRegistration = async (res) => {
+    if (!res || res.status !== "success" || !res.capCode) {
+      throw new Error(res?.error || "Server rejected registration");
+    }
+    const sessionToken = sessionTokenFromResponse(res);
+    if (REQUIRE_SERVER_SESSION && !sessionToken) {
+      throw new Error("PageMe server accepted the account but did not issue a secure session.");
+    }
+    if (sessionToken && !(await storeSessionTokenSecure(sessionToken))) {
+      throw new Error("PageMe could not protect this session on your device. Please try again.");
+    }
+    const capCode = res.capCode;
+    localStorage.setItem("pageme_user_name", signupForm.name.trim());
+    localStorage.setItem("pageme_user_email", signupForm.email.trim());
+    localStorage.setItem("pageme_cap_code", capCode);
+    localStorage.setItem("pageme_user_profile", JSON.stringify(signupForm));
+    if (signupForm.status === "Study" && selectedStudyPkgs.length > 0) {
+      const studyData = selectedStudyPkgs.map(pkg => ({
+        name: (installedApps.find(a => a.packageName === pkg) || {}).name || pkg,
+        packageName: pkg,
+      }));
+      localStorage.setItem(`pageme_study_apps_${capCode}`, JSON.stringify(studyData));
+    }
+    blip({ freq: 1600, dur: 0.1, vol: 0.12, enabled: soundOn });
+    setNewlyRegistered(true);
+    localStorage.setItem("pageme_is_new_reg", "true");
+    setPrevStep(7);
+    setStep(7);
+  };
+
   const submitRestore = async (e) => {
     if (e) e.preventDefault();
     const ucn = restoreUcn.trim().toUpperCase();
@@ -113,31 +178,17 @@ export function ActivationScreen({ onActivate, soundOn, reAuthMode = false }) {
     blip({ freq: 1400, dur: 0.05, vol: 0.1, enabled: soundOn });
 
     try {
-      const res = await postPageMe({ action: "restore", capCode: ucn, email });
-      if (res && res.status === "success" && res.name) {
-        const sessionToken = sessionTokenFromResponse(res);
-        if (REQUIRE_SERVER_SESSION && !sessionToken) {
-          throw new Error("PageMe server must be upgraded before this account can sign in securely.");
-        }
-        if (sessionToken) storeSessionToken(sessionToken);
-        localStorage.setItem("pageme_user_name", res.name);
-        localStorage.setItem("pageme_user_email", res.email || "");
-        localStorage.setItem("pageme_cap_code", res.capCode || ucn);
-        if (res.profile) localStorage.setItem("pageme_user_profile", JSON.stringify(res.profile));
+      const res = await postPageMe({ action: "requestRestore", capCode: ucn, email });
+      if (res?.verificationRequired && res.challengeId) {
         setRestoreLoading(false);
-        blip({ freq: 1600, dur: 0.1, vol: 0.12, enabled: soundOn });
-        if (reAuthMode) {
-          localStorage.removeItem("pageme_setup_step");
-          onActivate(res.settings || null);
-          return;
-        }
+        setVerification({ mode: "restore", challengeId: res.challengeId, email, ucn });
+        setVerificationCode("");
         setPrevStep(6);
-        const nextStep = 3;
-        localStorage.setItem("pageme_setup_step", String(nextStep));
-        setStep(nextStep);
-      } else {
-        throw new Error(res.error || "UCN not found. Please check your code.");
+        setStep(8);
+        return;
       }
+      await finalizeRestore(res, ucn);
+      setRestoreLoading(false);
     } catch (err) {
       console.warn("UCN restore failed:", err);
       setRestoreLoading(false);
@@ -160,11 +211,9 @@ export function ActivationScreen({ onActivate, soundOn, reAuthMode = false }) {
     setErrorMsg("");
     blip({ freq: 1400, dur: 0.05, vol: 0.1, enabled: soundOn });
 
-    let capCode = "";
-    let sessionToken = "";
     try {
       const res = await postPageMe({
-        action: "register",
+        action: "requestRegistration",
         name: signupForm.name.trim(), email: signupForm.email.trim(),
         occupation: signupForm.occupation.trim(), status: signupForm.status,
         country: signupForm.country.trim(), prefix
@@ -174,41 +223,58 @@ export function ActivationScreen({ onActivate, soundOn, reAuthMode = false }) {
         setErrorMsg("This email is already registered. Use 'Restore UCN' to access your account.");
         return;
       }
-      if (res && res.status === "success") {
-        capCode = res.capCode;
-        sessionToken = sessionTokenFromResponse(res);
-        if (REQUIRE_SERVER_SESSION && !sessionToken) {
-          throw new Error("PageMe server accepted the account but did not issue a secure session. Restore this account after the server is upgraded.");
-        }
-      } else {
-        throw new Error(res.error || "Server rejected registration");
+      if (res?.verificationRequired && res.challengeId) {
+        setSubmitting(false);
+        setVerification({
+          mode: "registration", challengeId: res.challengeId,
+          email: signupForm.email.trim().toLowerCase(), ucn: "",
+        });
+        setVerificationCode("");
+        setPrevStep(2);
+        setStep(8);
+        return;
       }
+      await finalizeRegistration(res);
+      setSubmitting(false);
     } catch (err) {
       console.warn("Registration failed:", err);
       setSubmitting(false);
       setErrorMsg(err.message || "Registration could not be completed. Check your connection and try again.");
+    }
+  };
+
+  const submitVerification = async (e) => {
+    if (e) e.preventDefault();
+    const code = verificationCode.replace(/\D/g, "").slice(0, 6);
+    if (!verification?.challengeId || code.length !== 6) {
+      setErrorMsg("Enter the six-digit code sent to your email.");
       return;
     }
-
-    if (sessionToken) storeSessionToken(sessionToken);
-    localStorage.setItem("pageme_user_name", signupForm.name.trim());
-    localStorage.setItem("pageme_user_email", signupForm.email.trim());
-    localStorage.setItem("pageme_cap_code", capCode);
-    localStorage.setItem("pageme_user_profile", JSON.stringify(signupForm));
-    if (signupForm.status === "Study" && selectedStudyPkgs.length > 0) {
-      const studyData = selectedStudyPkgs.map(pkg => ({
-        name: (installedApps.find(a => a.packageName === pkg) || {}).name || pkg,
-        packageName: pkg,
-      }));
-      localStorage.setItem(`pageme_study_apps_${capCode}`, JSON.stringify(studyData));
+    setVerificationLoading(true);
+    setErrorMsg("");
+    try {
+      const action = verification.mode === "registration" ? "verifyRegistration" : "verifyRestore";
+      const res = await postPageMe({ action, challengeId: verification.challengeId, code });
+      const failure = verificationFailureFromResponse(res);
+      if (failure) {
+        if (failure.requiresNewCode) {
+          setStep(prevStep);
+          setVerification(null);
+          setVerificationCode("");
+        }
+        setErrorMsg(failure.message);
+        return;
+      }
+      if (verification.mode === "registration") await finalizeRegistration(res);
+      else await finalizeRestore(res, verification.ucn);
+      setVerification(null);
+      setVerificationCode("");
+    } catch (err) {
+      console.warn("Email verification failed:", err);
+      setErrorMsg(err.message || "The verification code could not be confirmed.");
+    } finally {
+      setVerificationLoading(false);
     }
-
-    setSubmitting(false);
-    blip({ freq: 1600, dur: 0.1, vol: 0.12, enabled: soundOn });
-    setNewlyRegistered(true);
-    localStorage.setItem("pageme_is_new_reg", "true");
-    setPrevStep(7);
-    setStep(7);
   };
 
   const checkPermissions = React.useCallback(async () => {
@@ -331,23 +397,49 @@ export function ActivationScreen({ onActivate, soundOn, reAuthMode = false }) {
     }
   };
 
+  const completeActivation = () => {
+    blip({ freq: 1600, dur: 0.05, vol: 0.12, enabled: soundOn });
+    localStorage.removeItem("pageme_setup_step");
+    localStorage.removeItem("pageme_dnd_clicked");
+    setStep(4);
+    setTimeout(() => {
+      if (newlyRegistered || localStorage.getItem("pageme_is_new_reg") === "true") {
+        localStorage.setItem("pageme_show_welcome", "true");
+      }
+      localStorage.removeItem("pageme_is_new_reg");
+      onActivate();
+    }, 1700);
+  };
+
+  const shareActivationStatus = async () => {
+    if (statusShareBusy || typeof onShareStatus !== "function") return;
+    setStatusShareBusy(true);
+    setStatusShareError("");
+    try {
+      await onShareStatus({ context: "activation" });
+      setStatusShared(true);
+    } catch (error) {
+      setStatusShareError(error?.message || "Status sharing is unavailable. Pager Mode can still start normally.");
+    } finally {
+      setStatusShareBusy(false);
+    }
+  };
+
   const next = () => {
     let nextStep = step;
     if (step === 0) nextStep = 1;
     else if (step === 1) nextStep = 2;
     else if (step === 2) return;
     else if (step === 3) {
-      blip({ freq: 1600, dur: 0.05, vol: 0.12, enabled: soundOn });
-      nextStep = 4;
-      localStorage.removeItem("pageme_setup_step");
-      localStorage.removeItem("pageme_dnd_clicked");
-      setTimeout(() => {
-        if (newlyRegistered || localStorage.getItem("pageme_is_new_reg") === "true") {
-          localStorage.setItem("pageme_show_welcome", "true");
-        }
-        localStorage.removeItem("pageme_is_new_reg");
-        onActivate();
-      }, 1700);
+      if (shouldOfferActivationShare()) {
+        localStorage.setItem(STATUS_SHARE_ONBOARDING_KEY, "true");
+        setStatusShareError("");
+        setStatusShared(false);
+        setStep(9);
+        return;
+      }
+      completeActivation();
+      return;
     } else if (step === 7) {
       nextStep = 3;
     } else if (step === 5) {
@@ -503,7 +595,7 @@ export function ActivationScreen({ onActivate, soundOn, reAuthMode = false }) {
               </div>
               {errorMsg && <div className="act-error">⚠️ {errorMsg}</div>}
               <button type="submit" className="act-btn primary" disabled={submitting} style={{ marginTop: "8px" }}>
-                {submitting ? "Allocating Cap Code..." : "Submit & Generate Cap Code"}
+                {submitting ? "Sending verification code..." : "Verify Email & Generate Cap Code"}
               </button>
               <button type="button" className="act-btn" style={{ background: "transparent", border: "none", color: "rgba(155,191,58,0.8)", fontSize: "12px", marginTop: "0", padding: "6px", textDecoration: "underline", cursor: "pointer" }}
                 onClick={() => { setStep(6); setErrorMsg(""); }}>
@@ -549,6 +641,27 @@ export function ActivationScreen({ onActivate, soundOn, reAuthMode = false }) {
           </div>
         )}
 
+        {step === 9 && (
+          <>
+            <div className="act-eyebrow">OPTIONAL STATUS</div>
+            <h1 className="act-title">Focus without disappearing.</h1>
+            <p className="act-sub">Share a private, expiring link so people can page you without pulling you back into distracting apps.</p>
+            <div className="act-benefit-card">
+              <h3>What people see</h3>
+              <p>“I'm using PageMe right now. Need me? Send me a page.” Your name, email, phone number, and UCN are not shown on the public page.</p>
+            </div>
+            {statusShareError && <div className="act-error">{statusShareError}</div>}
+            {statusShared && <div className="act-share-ok">STATUS READY · RETURNED TO PAGEME</div>}
+            <button className="act-btn" onClick={shareActivationStatus} disabled={statusShareBusy}>
+              {statusShareBusy ? "Preparing secure link..." : "Share Status"}
+            </button>
+            <button className="act-btn primary" onClick={completeActivation} disabled={statusShareBusy}>
+              Start Pager Mode
+            </button>
+            <div className="act-foot small">Sharing never starts or pins PageMe. Start Pager Mode only when you are ready.</div>
+          </>
+        )}
+
         {step === 5 && (
           <>
             <div className="act-eyebrow">WELCOME BACK</div>
@@ -562,7 +675,7 @@ export function ActivationScreen({ onActivate, soundOn, reAuthMode = false }) {
             </div>
             <button className="act-btn primary" onClick={next}>Resume Pager Mode →</button>
             <button className="act-btn" style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(232,230,223,0.6)", marginTop: "4px", fontSize: "13px" }}
-              onClick={() => { ["pageme_user_name","pageme_user_email","pageme_cap_code","pageme_user_profile","pageme_setup_step","pageme_dnd_clicked","pageme_show_welcome"].forEach(k => localStorage.removeItem(k)); clearSessionToken(); setStep(0); }}>
+              onClick={() => { ["pageme_user_name","pageme_user_email","pageme_cap_code","pageme_user_profile","pageme_setup_step","pageme_dnd_clicked","pageme_show_welcome"].forEach(k => localStorage.removeItem(k)); clearSessionTokenSecure().catch(() => {}); setStep(0); }}>
               Reset Pager Profile
             </button>
             <div className="act-foot">Your existing registration will be used</div>
@@ -574,7 +687,7 @@ export function ActivationScreen({ onActivate, soundOn, reAuthMode = false }) {
             <div className="act-eyebrow">{reAuthMode ? "VERIFY IDENTITY" : "RESTORE PAGER"}</div>
             <h1 className="act-title" style={{ fontSize: "24px", margin: "4px 0" }}>Sign in with UCN</h1>
             <p className="act-sub" style={{ fontSize: "12px", marginBottom: "8px" }}>
-              {reAuthMode ? "You've been away for a while. Enter your UCN and registered email to continue." : "Enter the UCN (Cap Code) from your registration email to restore your pager profile."}
+              {reAuthMode ? "Enter your UCN and registered email. PageMe will email a short verification code before creating a new session." : "Enter your UCN and registered email. PageMe will send a short verification code to restore your pager profile."}
             </p>
             <form onSubmit={submitRestore} className="act-form" style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               <div className="act-input-group">
@@ -607,14 +720,44 @@ export function ActivationScreen({ onActivate, soundOn, reAuthMode = false }) {
               </div>
               {errorMsg && <div className="act-error">⚠️ {errorMsg}</div>}
               <button type="submit" className="act-btn primary" disabled={restoreLoading} style={{ marginTop: "4px" }}>
-                {restoreLoading ? "Verifying UCN..." : "Restore My Pager →"}
+                {restoreLoading ? "Sending verification code..." : "Email My Sign-In Code →"}
               </button>
             </form>
             <button className="act-btn" style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.15)", color: "#e8e6df", marginTop: "4px" }}
               onClick={() => { setStep(0); localStorage.removeItem("pageme_setup_step"); setErrorMsg(""); }}>
               Register as new user instead
             </button>
-            <div className="act-foot">Check your email for your UCN code</div>
+            <div className="act-foot">The sign-in code expires after 10 minutes</div>
+          </>
+        )}
+
+        {step === 8 && (
+          <>
+            <button className="act-back-btn" onClick={() => { setStep(prevStep); setVerification(null); setVerificationCode(""); setErrorMsg(""); }}>← Back</button>
+            <div className="act-eyebrow">EMAIL VERIFICATION</div>
+            <h1 className="act-title" style={{ fontSize: "24px", margin: "4px 0" }}>Enter your 6-digit code</h1>
+            <p className="act-sub" style={{ fontSize: "12px", marginBottom: "8px" }}>
+              PageMe sent a one-time code to <span style={{ color: "rgba(155,191,58,0.9)" }}>{verification?.email || "your email"}</span>. It expires after 10 minutes.
+            </p>
+            <form onSubmit={submitVerification} className="act-form" style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div className="act-input-group">
+                <label className="act-label">Verification code</label>
+                <input type="text" className="act-input" value={verificationCode}
+                  onChange={(e) => { setVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 6)); setErrorMsg(""); }}
+                  placeholder="000000" disabled={verificationLoading} maxLength={6}
+                  inputMode="numeric" autoComplete="one-time-code"
+                  style={{ fontSize: "24px", textAlign: "center", letterSpacing: "0.22em", padding: "14px" }} />
+              </div>
+              {errorMsg && <div className="act-error">⚠️ {errorMsg}</div>}
+              <button type="submit" className="act-btn primary" disabled={verificationLoading || verificationCode.length !== 6}>
+                {verificationLoading ? "Confirming code..." : (verification?.mode === "registration" ? "Create My Pager →" : "Sign In to PageMe →")}
+              </button>
+            </form>
+            <button className="act-btn" style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.15)", color: "#e8e6df", marginTop: "4px" }}
+              onClick={() => { setStep(prevStep); setVerification(null); setVerificationCode(""); setErrorMsg("Request a new code below."); }}>
+              Request a new code
+            </button>
+            <div className="act-foot">Never share this code with anyone</div>
           </>
         )}
 
@@ -690,6 +833,7 @@ export function ActivationScreen({ onActivate, soundOn, reAuthMode = false }) {
         .act-select { appearance: none; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.3) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23eee'><path d='M2 4l4 4 4-4z'/></svg>") no-repeat right 12px center; border-radius: 8px; padding: 8px 32px 8px 10px; color: #fff; font-family: 'JetBrains Mono', monospace; font-size: 13px; width: 100%; }
         .act-select:focus { border-color: #9bbf3a; outline: none; }
         .act-error { color: #ff6b6b; font-family: 'JetBrains Mono', monospace; font-size: 11px; margin-top: 2px; text-align: left; }
+        .act-share-ok { color: #9bbf3a; border: 1px solid rgba(155,191,58,.35); background: rgba(155,191,58,.08); border-radius: 8px; padding: 9px 11px; font: 700 10px 'JetBrains Mono', monospace; text-align: center; }
         .act-country-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: #0c1207; border: 1px solid rgba(155,191,58,0.4); border-radius: 8px; max-height: 160px; overflow-y: auto; z-index: 999; margin-top: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
         .act-country-item { padding: 8px 12px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: rgba(232,230,223,0.9); cursor: pointer; text-align: left; }
         .act-country-item:hover { background: #9bbf3a; color: #0d1408; }

@@ -38,7 +38,54 @@ try {
   if (guideOverflow) throw new Error("Guide has horizontal overflow at 390px");
   await guide.close();
 
-  console.log("PageMe website verification passed at 360, 390, 768, and 1440 pixels.");
+  const statusToken = "A".repeat(43);
+  for (const width of widths) {
+    const statusPage = await browser.newPage({ viewport: { width, height: width < 700 ? 844 : 1000 } });
+    await statusPage.route("**/macros/s/**", route => route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        status: "success", active: true, linkState: "active", context: "focus",
+        expiresAt: new Date(Date.now() + 3600000).toISOString(),
+        focusEndsAt: new Date(Date.now() + 3600000).toISOString(),
+      }),
+    }));
+    await statusPage.goto(`${baseUrl}/page.html?s=${statusToken}`, { waitUntil: "networkidle" });
+    const statusResult = await statusPage.evaluate(() => ({
+      scrollWidth: document.documentElement.scrollWidth,
+      viewportWidth: window.innerWidth,
+      title: document.querySelector("#status-title")?.textContent?.trim(),
+      body: document.body.textContent || "",
+      openUrl: document.querySelector("[data-open-app]")?.href,
+      retryVisible: getComputedStyle(document.querySelector("[data-status-retry]")).display !== "none",
+    }));
+    if (statusResult.scrollWidth > statusResult.viewportWidth + 1) throw new Error(`Status page overflow at ${width}px`);
+    if (statusResult.title !== "They are using PageMe") throw new Error(`Active status did not render at ${width}px`);
+    if (statusResult.body.includes("AYO-001") || statusResult.body.includes("example.com")) throw new Error("Public status page exposed identity data");
+    if (!statusResult.openUrl?.includes(`/page.html?s=${statusToken}`)) throw new Error("Open PageMe action lost its private token");
+    if (statusResult.retryVisible) throw new Error(`Retry action was visible for an active status at ${width}px`);
+    await statusPage.close();
+  }
+
+  const expiredPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await expiredPage.route("**/macros/s/**", route => route.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({ status: "success", active: false, linkState: "expired" }),
+  }));
+  await expiredPage.goto(`${baseUrl}/page.html?s=${statusToken}`, { waitUntil: "networkidle" });
+  if (await expiredPage.locator("#status-title").textContent() !== "Pager status ended") {
+    throw new Error("Expired status did not fail closed");
+  }
+  await expiredPage.close();
+
+  const invalidPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await invalidPage.goto(`${baseUrl}/page.html?s=short`, { waitUntil: "networkidle" });
+  if (await invalidPage.locator("#status-title").textContent() !== "Invalid status link") {
+    throw new Error("Malformed status token was not rejected");
+  }
+  await invalidPage.close();
+
+  console.log("PageMe website and status-link verification passed at 360, 390, 768, and 1440 pixels.");
 } finally {
   await browser.close();
 }

@@ -89,6 +89,14 @@ export function normalizeInbox(value, limit = MAX_INBOX_MESSAGES) {
       canReply: item.canReply === true,
       replyKey: typeof item.replyKey === 'string' ? item.replyKey.slice(0, 500) : '',
       senderKey: typeof item.senderKey === 'string' ? item.senderKey.trim().slice(0, 500) : '',
+      serverMessageId: typeof item.serverMessageId === 'string' ? item.serverMessageId.trim().slice(0, 120) : '',
+      clientMessageId: typeof item.clientMessageId === 'string' ? item.clientMessageId.trim().slice(0, 120) : '',
+      direction: item.direction === 'outgoing' ? 'outgoing' : (item.direction === 'incoming' ? 'incoming' : ''),
+      status: ['sent', 'delivered', 'read'].includes(item.status) ? item.status : '',
+      createdAt: typeof item.createdAt === 'string' ? item.createdAt.slice(0, 40) : '',
+      deliveredAt: typeof item.deliveredAt === 'string' ? item.deliveredAt.slice(0, 40) : '',
+      readAt: typeof item.readAt === 'string' ? item.readAt.slice(0, 40) : '',
+      replyToId: typeof item.replyToId === 'string' ? item.replyToId.slice(0, 120) : '',
     });
     if (messages.length >= limit) break;
   }

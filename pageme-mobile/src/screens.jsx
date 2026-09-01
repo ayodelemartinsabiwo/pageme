@@ -116,18 +116,22 @@ export function HomeScreen({ now, msgUnread, lastFrom, focusLockUntil = 0 }) {
 }
 
 export function MenuScreen({ items, selected }) {
+  const start = Math.max(0, Math.min(Math.max(0, items.length - 6), selected - 2));
+  const visible = items.slice(start, start + 6);
   return (
     <div className="lcd-page">
       <LcdLine align="center" inverse>━ MAIN MENU ━</LcdLine>
-      {items.map((item, i) => (
-        <div key={item.id} className={"lcd-menu-row" + (i === selected ? " selected" : "")}>
-          <span className="lcd-menu-arrow">{i === selected ? "▶" : " "}</span>
+      {visible.map((item, i) => {
+        const itemIndex = start + i;
+        return (
+        <div key={item.id} className={"lcd-menu-row" + (itemIndex === selected ? " selected" : "")}>
+          <span className="lcd-menu-arrow">{itemIndex === selected ? "▶" : " "}</span>
           <span style={{ flex: 1 }}>{item.label}</span>
           {item.badge != null && item.badge > 0 && (
             <span className="lcd-menu-badge">[{item.badge}]</span>
           )}
         </div>
-      ))}
+      );})}
       <div className="lcd-page-foot">
         <span>▲▼ NAV</span><span>SELECT ▶ OPEN</span>
       </div>
@@ -195,6 +199,7 @@ export function InboxScreen({ items, selected, viewMode = "categories", category
           else if (src === "msgr" || src === "messenger" || src === "orca") srcTag = "💬 MSG";
           else if (src === "alarm" || src === "clock" || src === "deskclock") srcTag = "⏰ ALM";
           else if (src === "google" || src === "googlequicksearchbox") srcTag = "☀ GGL";
+          else if (src === "pageme-network" || src === "ucn") srcTag = "▮ UCN";
           else if (src === "sms" || src === "messages" || src === "messaging") srcTag = "✉ SMS";
           else {
             let abbr = m.source.replace(/[^a-zA-Z0-9]/g, "").substring(0, 3).toUpperCase();
@@ -225,12 +230,15 @@ export function InboxScreen({ items, selected, viewMode = "categories", category
 export function ReadScreen({ msg, codeMeaning }) {
   if (!msg) return null;
   const isCode = msg.type === "code";
-  const srcLabel = "VIA " + (msg.source || "SMS").toUpperCase();
+  const isNetwork = msg.source === "pageme-network";
+  const outgoing = isNetwork && msg.direction === "outgoing";
+  const srcLabel = isNetwork ? "VIA PAGEME" : "VIA " + (msg.source || "SMS").toUpperCase();
+  const statusLabel = outgoing && msg.status ? ` • ${msg.status.toUpperCase()}` : "";
   return (
     <div className="lcd-page">
-      <LcdLine align="center" inverse>FROM: {msg.from}</LcdLine>
+      <LcdLine align="center" inverse>{outgoing ? "TO" : "FROM"}: {msg.from}</LcdLine>
       <LcdLine align="center" dim style={{ fontSize: "0.85em" }}>
-        {msg.number} • {srcLabel}
+        {srcLabel}{statusLabel}
       </LcdLine>
       <LcdLine align="center" dim style={{ fontSize: "0.82em" }}>{msg.date} {msg.time}</LcdLine>
       <div className="lcd-msg-body">
@@ -244,8 +252,72 @@ export function ReadScreen({ msg, codeMeaning }) {
         )}
       </div>
       <div className="lcd-page-foot">
-        <span>BACK ◀</span>{msg.canReply ? <span>SEND ▶ REPLY</span> : <span>NO REPLY</span>}
+        <span>{isNetwork && !outgoing ? "MENU=SAFETY" : "BACK ◀"}</span>
+        {msg.canReply ? <span>SEND ▶ REPLY</span> : <span>NO REPLY</span>}
       </div>
+    </div>
+  );
+}
+
+export function MessageActionsScreen({ sender, selected = 0, busy = false }) {
+  const options = ["BACK", "BLOCK SENDER", "REPORT + BLOCK"];
+  return (
+    <div className="lcd-page">
+      <LcdLine align="center" inverse>MESSAGE SAFETY</LcdLine>
+      <LcdLine align="center" dim style={{ fontSize: "0.82em" }}>FROM {sender || "UNKNOWN"}</LcdLine>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+        {options.map((label, index) => (
+          <div key={label} className={"lcd-menu-row" + (index === selected ? " selected" : "")}>
+            <span className="lcd-menu-arrow">{index === selected ? "▶" : " "}</span>
+            <span>{busy && index === selected && index > 0 ? "WORKING..." : label}</span>
+          </div>
+        ))}
+      </div>
+      <div className="lcd-page-foot"><span>BACK=◀</span><span>SELECT ▶</span></div>
+    </div>
+  );
+}
+
+export function BlockedUsersScreen({ items = [], selected = 0, loading = false, busy = false }) {
+  const start = Math.max(0, Math.min(Math.max(0, items.length - 6), selected - 2));
+  const visible = items.slice(start, start + 6);
+  return (
+    <div className="lcd-page">
+      <LcdLine align="center" inverse>BLOCKED UCNs</LcdLine>
+      {loading ? (
+        <div className="lcd-text-msg">LOADING...</div>
+      ) : visible.length ? visible.map((ucn, index) => {
+        const itemIndex = start + index;
+        return (
+          <div key={ucn} className={"lcd-menu-row" + (itemIndex === selected ? " selected" : "")}>
+            <span className="lcd-menu-arrow">{itemIndex === selected ? "▶" : " "}</span>
+            <span>{busy && itemIndex === selected ? "UNBLOCKING..." : ucn}</span>
+          </div>
+        );
+      }) : (
+        <div className="lcd-text-msg">NO BLOCKED UCNs</div>
+      )}
+      <div className="lcd-page-foot"><span>BACK=◀ ▲▼</span><span>{items.length ? "SELECT=UNBLOCK" : "EMPTY"}</span></div>
+    </div>
+  );
+}
+
+export function DeleteAccountScreen({ ucn, selected = 0, deleting = false }) {
+  const options = ['CANCEL', 'DELETE ACCOUNT'];
+  return (
+    <div className="lcd-page">
+      <LcdLine align="center" inverse>DELETE PAGEME ACCOUNT</LcdLine>
+      <LcdLine align="center" dim style={{ fontSize: "0.82em" }}>{ucn}</LcdLine>
+      <div className="lcd-text-msg" style={{ fontSize: "0.86em", margin: "8px 2px" }}>
+        This permanently removes your PageMe account and network pages.
+      </div>
+      {options.map((label, index) => (
+        <div key={label} className={"lcd-menu-row" + (index === selected ? " selected" : "")}>
+          <span className="lcd-menu-arrow">{index === selected ? "▶" : " "}</span>
+          <span>{deleting && index === 1 ? "DELETING..." : label}</span>
+        </div>
+      ))}
+      <div className="lcd-page-foot"><span>BACK=◀</span><span>SELECT ▶</span></div>
     </div>
   );
 }
@@ -617,6 +689,38 @@ export function FocusPagesChoiceScreen({ selectedIndex }) {
       </div>
       <div className="lcd-page-foot">
         <span>▲▼ NAV</span><span>SEND ▶ LOCK</span>
+      </div>
+    </div>
+  );
+}
+
+export function StatusShareScreen({ selectedIndex, context, focusEndsAt, copyOnly, busy, error }) {
+  const isFocus = context === "focus";
+  const endLabel = isFocus && Number(focusEndsAt) > Date.now()
+    ? `UNTIL ${safeFormatTime(new Date(Number(focusEndsAt)))}`
+    : "ACTIVE FOR UP TO 4 HOURS";
+  const options = [
+    copyOnly ? "COPY STATUS LINK" : "SHARE STATUS",
+    isFocus ? "START FOCUS" : "BACK TO MENU",
+  ];
+  return (
+    <div className="lcd-page lcd-center">
+      <LcdLine align="center" inverse>━ SHARE STATUS ━</LcdLine>
+      <LcdLine align="center" style={{ fontSize: "0.86em", lineHeight: "1.25" }}>
+        FOCUS WITHOUT<br />DISAPPEARING
+      </LcdLine>
+      <LcdLine align="center" dim style={{ fontSize: "0.76em" }}>{endLabel}</LcdLine>
+      {error && <LcdLine align="center" style={{ fontSize: "0.7em" }}>{error.toUpperCase()}</LcdLine>}
+      <div style={{ marginTop: 4 }}>
+        {options.map((label, index) => (
+          <div key={label} className={"lcd-menu-row" + (index === selectedIndex ? " selected" : "")}>
+            <span className="lcd-menu-arrow">{index === selectedIndex ? "▶" : " "}</span>
+            <span>{busy && index === 0 ? "PREPARING LINK..." : label}</span>
+          </div>
+        ))}
+      </div>
+      <div className="lcd-page-foot">
+        <span>▲▼ NAV</span><span>SEND ▶ SELECT</span>
       </div>
     </div>
   );

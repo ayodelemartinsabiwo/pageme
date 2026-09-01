@@ -13,6 +13,7 @@ pageme-mobile/android/app/build/
 pageme-mobile/android/local.properties
 pageme-mobile/artifacts/
 pageme-mobile/signing-private/
+pageme-mobile/android/app/google-services.json
 *.log
 .DS_Store
 .env

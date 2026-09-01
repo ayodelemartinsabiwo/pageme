@@ -13,8 +13,8 @@ android {
         applicationId "com.pageme.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 26
-        versionName "1.3.13"
+        versionCode 31
+        versionName "1.3.18"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -48,12 +48,30 @@ repositories {
     }
 }
 
+// Firebase's current DataStore dependency is multiplatform. This Java-only
+// Android module otherwise resolves its generic coordinates to JVM artifacts,
+// which omit Android's PreferenceDataStoreDelegateKt implementation.
+configurations.configureEach {
+    resolutionStrategy.dependencySubstitution {
+        substitute module('androidx.datastore:datastore-preferences') using module('androidx.datastore:datastore-preferences-android:1.1.7')
+        substitute module('androidx.datastore:datastore') using module('androidx.datastore:datastore-android:1.1.7')
+        substitute module('androidx.datastore:datastore-core') using module('androidx.datastore:datastore-core-android:1.1.7')
+        substitute module('androidx.datastore:datastore-preferences-core') using module('androidx.datastore:datastore-preferences-core-android:1.1.7')
+    }
+}
+
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
     implementation project(':capacitor-android')
+    implementation platform('com.google.firebase:firebase-bom:34.18.0')
+    implementation 'com.google.firebase:firebase-messaging'
+    // Firebase Installations uses DataStore's Android-only delegate at runtime.
+    // Declaring the target explicitly prevents Gradle from selecting the JVM variant.
+    implementation 'androidx.datastore:datastore-preferences-android:1.1.7'
+    implementation 'androidx.work:work-runtime:2.10.5'
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"

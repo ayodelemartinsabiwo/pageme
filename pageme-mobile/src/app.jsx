@@ -1,6 +1,8 @@
 // app.jsx — main PageMe app: activation gate → pager mode
 
 import React from 'react';
+import { App as CapacitorApp } from '@capacitor/app';
+import { Share } from '@capacitor/share';
 import { blip, pageAlert, buttonClick, bootChime, startFocusSound, stopFocusSound } from './audio.js';
 import { PAGER_CODES, SEED_INBOX, INCOMING_QUEUE } from './data.jsx';
 import {
@@ -8,14 +10,24 @@ import {
   getInboxMessages, nowFormat, safeFormatTime, safeFormatDate,
 } from './utils.js';
 import { postPageMe } from './api.js';
-import { REQUIRE_SERVER_SESSION } from './config.js';
+import { PAGEME_SCRIPT_URL, REQUIRE_SERVER_SESSION } from './config.js';
 import { readJsonStorage, writeJsonStorage } from './storage.js';
-import { getSessionToken } from './identity.js';
+import { clearSessionTokenSecure, getSessionToken } from './identity.js';
 import { DUPLICATE_PAGE_WINDOW_MS, inboxStorageKey, normalizeInbox, pageContentKey } from './inbox.js';
+import {
+  createClientMessageId, mergeNetworkMessages, messageCursorStorageKey,
+  isRetryableMessageError, MESSAGE_SYNC_INTERVAL_MS, newIncomingNetworkMessages, normalizeUcn,
+  pruneExpiredNetworkMessages,
+} from './messaging.js';
 import { shouldSyncPagerMode } from './lifecycle.js';
 import { shouldStartLora } from './lora.js';
 import { DEFAULT_FOCUS_SCHEDULE, focusScheduleSummary, normalizeFocusSchedule } from './focus-schedule.js';
 import { deleteBeforeTextCursor, insertTextAtCursor, moveTextCursor } from './compose-editing.js';
+import {
+  STATUS_SHARE_SETTING_KEY,
+  askToShareStatus, buildStatusShareMessage, buildStatusShareText, clearStoredStatus, readStoredStatus,
+  shouldOfferFocusShare, statusTokenFromUrl, writeStoredStatus,
+} from './status-sharing.js';
 import { ActivationScreen } from './activation.jsx';
 import { PagerChassis, Keyboard } from './device.jsx';
 import { HorizontalPagerChassis, RotateHint } from './horizontal.jsx';
@@ -27,7 +39,8 @@ import {
   PinBlockerScreen, PinPromptScreen, FocusSoundChoiceScreen,
   FocusPagesChoiceScreen, StudyAppsScreen, EmergencyScreen,
   StudyConfigOverlay, EmergencyContactOverlay, AlarmOverlay, ClearInboxScreen,
-  FocusAutomationOverlay,
+  DeleteAccountScreen, FocusAutomationOverlay, MessageActionsScreen, BlockedUsersScreen,
+  StatusShareScreen,
 } from './screens.jsx';
 import {
   useTweaks, TweaksPanel, TweakSection, TweakRadio,
@@ -51,8 +64,28 @@ const MENU_ITEMS_BASE = [
   { id: "codes",    label: "CODE BOOK" },
   { id: "study",    label: "STUDY APPS" },
   { id: "timer",    label: "FOCUS TIMER" },
+  { id: "share_status", label: "SHARE STATUS" },
   { id: "settings", label: "SETTINGS" },
 ];
+
+async function copyText(text) {
+  if (navigator.clipboard?.writeText) {
+    try { await navigator.clipboard.writeText(text); return true; }
+    catch (_) {}
+  }
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.select();
+  let copied = false;
+  try { copied = document.execCommand("copy"); }
+  catch (_) {}
+  textarea.remove();
+  return copied;
+}
 
 export function App() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
@@ -104,6 +137,14 @@ export function App() {
   const [focusSilentPages, setFocusSilentPages] = React.useState(() =>
     localStorage.getItem("pageme_focus_silent_pages") === "true"
   );
+  const [askShareStatus, setAskShareStatus] = React.useState(() => askToShareStatus());
+  const [activeStatusLink, setActiveStatusLink] = React.useState(() => readStoredStatus());
+  const [statusShareContext, setStatusShareContext] = React.useState(null);
+  const [statusShareSel, setStatusShareSel] = React.useState(0);
+  const [statusShareBusy, setStatusShareBusy] = React.useState(false);
+  const [statusShareError, setStatusShareError] = React.useState("");
+  const [inboundStatusToken, setInboundStatusToken] = React.useState("");
+  const [deepLinkAccess, setDeepLinkAccess] = React.useState(false);
   const [focusAutomation, setFocusAutomation] = React.useState(() => normalizeFocusSchedule(
     readJsonStorage("pageme_focus_schedule", DEFAULT_FOCUS_SCHEDULE)
   ));
@@ -143,6 +184,14 @@ export function App() {
   const [alarmInfo, setAlarmInfo] = React.useState(null);
   const [alarmSel, setAlarmSel] = React.useState(0);
   const [clearInboxSel, setClearInboxSel] = React.useState(0);
+  const [deleteAccountSel, setDeleteAccountSel] = React.useState(0);
+  const [accountDeleting, setAccountDeleting] = React.useState(false);
+  const [messageActionSel, setMessageActionSel] = React.useState(0);
+  const [messageActionBusy, setMessageActionBusy] = React.useState(false);
+  const [blockedUcns, setBlockedUcns] = React.useState([]);
+  const [blockedSel, setBlockedSel] = React.useState(0);
+  const [blockedLoading, setBlockedLoading] = React.useState(false);
+  const [blockedBusy, setBlockedBusy] = React.useState(false);
   const clearInboxReturnScreen = React.useRef("inbox");
   const [studyAppActive, setStudyAppActive] = React.useState(() =>
     localStorage.getItem("pageme_study_app_active") === "true"
@@ -256,7 +305,7 @@ export function App() {
         if (NRP && typeof NRP.enableLauncher === 'function') NRP.enableLauncher();
       }
       if (!showWelcome) localStorage.setItem("pageme_last_active", String(Date.now()));
-      setScreen(showWelcome ? "welcome" : "home");
+      setScreen(current => current === "boot" ? (showWelcome ? "welcome" : "home") : current);
     }, 2900);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -282,6 +331,8 @@ export function App() {
   });
   const inboxScopeRef = React.useRef(initialInboxKey);
   const skipInboxPersistRef = React.useRef(false);
+  const inboxRef = React.useRef(inbox);
+  const messageSyncBusyRef = React.useRef(false);
   const [inboxSel, setInboxSel] = React.useState(0);
   const [readingId, setReadingId] = React.useState(null);
   const [inboxViewMode, setInboxViewMode] = React.useState("categories");
@@ -295,6 +346,160 @@ export function App() {
     window.__toastTimeout = setTimeout(() => setToastMessage(""), 3000);
   }, []);
 
+  const recordProductEvent = React.useCallback(async (event, context = "", statusToken = "") => {
+    const capCode = normalizeUcn(localStorage.getItem("pageme_cap_code") || "");
+    const sessionToken = getSessionToken();
+    if (!capCode || !sessionToken) return false;
+    try {
+      const response = await postPageMe({
+        action: "recordProductEvent", capCode, sessionToken, event, context, statusToken,
+      }, { timeoutMs: 5000 });
+      return response?.status === "success";
+    } catch (_) {
+      return false;
+    }
+  }, []);
+
+  const rememberStatusLink = React.useCallback((status) => {
+    if (!writeStoredStatus(status)) return null;
+    const stored = readStoredStatus();
+    setActiveStatusLink(stored);
+    return stored;
+  }, []);
+
+  const ensureStatusLink = React.useCallback(async ({ context, focusEndsAt = 0 }) => {
+    const now = Date.now();
+    const storedExpiry = Date.parse(activeStatusLink?.expiresAt || "");
+    const storedFocusEnd = Date.parse(activeStatusLink?.focusEndsAt || "");
+    const canReuse = activeStatusLink && storedExpiry > now
+      && (context === "focus"
+        ? activeStatusLink.context === "focus" && Math.abs(storedFocusEnd - Number(focusEndsAt)) < 1000
+        : activeStatusLink.context !== "focus");
+    if (canReuse) return activeStatusLink;
+
+    const capCode = normalizeUcn(localStorage.getItem("pageme_cap_code") || "");
+    const sessionToken = getSessionToken();
+    if (!capCode || !sessionToken) throw new Error("Sign in again before sharing your PageMe status.");
+    const response = await postPageMe({
+      action: "createStatusLink", capCode, sessionToken, context,
+      focusEndsAt: focusEndsAt ? new Date(focusEndsAt).toISOString() : "",
+    });
+    if (response?.status !== "success" || !response.token || !response.url) {
+      throw new Error(response?.error || "Status sharing is unavailable. Pager Mode can still start normally.");
+    }
+    const stored = rememberStatusLink({
+      token: response.token, url: response.url, context: response.context || context,
+      expiresAt: response.expiresAt, focusEndsAt: response.focusEndsAt || "",
+    });
+    if (!stored) throw new Error("PageMe could not safely retain the status link on this device.");
+    return stored;
+  }, [activeStatusLink, rememberStatusLink]);
+
+  const shareStatus = React.useCallback(async ({ context, focusEndsAt = 0 }) => {
+    const status = await ensureStatusLink({ context, focusEndsAt });
+    const message = buildStatusShareMessage({ context, focusEndsAt });
+    const text = buildStatusShareText({ context, focusEndsAt, url: status.url });
+    recordProductEvent("share_sheet_opened", context, status.token);
+    if (window.Capacitor) {
+      await Share.share({ title: "My PageMe status", text: message, url: status.url, dialogTitle: "Share PageMe status" });
+      return status;
+    }
+    if (navigator.share) {
+      await navigator.share({ title: "My PageMe status", text: message, url: status.url });
+      return status;
+    }
+    if (!(await copyText(status.url))) throw new Error("The link could not be copied on this device.");
+    showToast("STATUS LINK COPIED");
+    return status;
+  }, [ensureStatusLink, recordProductEvent, showToast]);
+
+  const copyStatusLink = React.useCallback(async ({ context, focusEndsAt = 0 }) => {
+    const status = await ensureStatusLink({ context, focusEndsAt });
+    if (!(await copyText(status.url))) throw new Error("The link could not be copied on this device.");
+    showToast("STATUS LINK COPIED");
+    return status;
+  }, [ensureStatusLink, showToast]);
+
+  const revokeActiveStatus = React.useCallback((context = "") => {
+    const status = activeStatusLink || readStoredStatus();
+    clearStoredStatus();
+    setActiveStatusLink(null);
+    if (!status) return;
+    const capCode = normalizeUcn(localStorage.getItem("pageme_cap_code") || "");
+    const sessionToken = getSessionToken();
+    if (!capCode || !sessionToken) return;
+    postPageMe({
+      action: "revokeStatusLink", capCode, sessionToken, token: status.token,
+      context: context || status.context,
+    }, { timeoutMs: 5000 }).catch(() => {});
+  }, [activeStatusLink]);
+
+  const previousStatusActivation = React.useRef(activated);
+  React.useEffect(() => {
+    if (previousStatusActivation.current && !activated) revokeActiveStatus();
+    previousStatusActivation.current = activated;
+  }, [activated, revokeActiveStatus]);
+
+  const openStatusComposer = React.useCallback(async (token) => {
+    const normalizedToken = String(token || "");
+    const capCode = normalizeUcn(localStorage.getItem("pageme_cap_code") || "");
+    const sessionToken = getSessionToken();
+    if (!normalizedToken || !capCode || !sessionToken) {
+      if (normalizedToken) localStorage.setItem("pageme_pending_status_token", normalizedToken);
+      return false;
+    }
+    try {
+      const response = await postPageMe({
+        action: "resolveStatusLinkAuthenticated", token: normalizedToken,
+        capCode, sessionToken,
+      });
+      if (response?.status !== "success" || !normalizeUcn(response.toUcn)) {
+        localStorage.removeItem("pageme_pending_status_token");
+        showToast(response?.error || "THIS STATUS LINK IS UNAVAILABLE");
+        return false;
+      }
+      openCompose();
+      setCompTo(normalizeUcn(response.toUcn));
+      setCompCursor({ to: normalizeUcn(response.toUcn).length, body: 0 });
+      setInboundStatusToken(normalizedToken);
+      setDeepLinkAccess(!activated);
+      setScreen("compose");
+      localStorage.removeItem("pageme_pending_status_token");
+      return true;
+    } catch (_) {
+      localStorage.setItem("pageme_pending_status_token", normalizedToken);
+      showToast("STATUS LINK COULD NOT REACH PAGEME");
+      return false;
+    }
+  }, [activated, showToast]);
+
+  React.useEffect(() => {
+    if (!window.Capacitor) return undefined;
+    let disposed = false;
+    let listener = null;
+    const receiveUrl = (url) => {
+      const token = statusTokenFromUrl(url);
+      if (token && !disposed) openStatusComposer(token);
+    };
+    CapacitorApp.getLaunchUrl().then(result => receiveUrl(result?.url)).catch(() => {});
+    CapacitorApp.addListener("appUrlOpen", event => receiveUrl(event?.url))
+      .then(handle => { listener = handle; })
+      .catch(() => {});
+    return () => {
+      disposed = true;
+      if (listener && typeof listener.remove === "function") listener.remove();
+    };
+  }, [openStatusComposer]);
+
+  React.useEffect(() => {
+    const pending = localStorage.getItem("pageme_pending_status_token") || "";
+    if (pending && getSessionToken()) openStatusComposer(pending);
+  }, [activated, openStatusComposer]);
+
+  React.useEffect(() => {
+    inboxRef.current = inbox;
+  }, [inbox]);
+
   const unread = inbox.filter((m) => !m.read).length;
   const [menuSel, setMenuSel] = React.useState(0);
   const menuItems = MENU_ITEMS_BASE
@@ -307,6 +512,7 @@ export function App() {
   const [compMode, setCompMode] = React.useState("text");
   const [compField, setCompField] = React.useState("to");
   const [compReplyKey, setCompReplyKey] = React.useState("");
+  const [compClientMessageId, setCompClientMessageId] = React.useState("");
   const [compCursor, setCompCursor] = React.useState({ to: 0, body: 0 });
   const [showKb, setShowKb] = React.useState(false);
   const [sentOk, setSentOk] = React.useState(false);
@@ -389,6 +595,7 @@ export function App() {
   const settingsItems = [
     { id: "backlight", label: "BACKLIGHT",    value: !!t.backlight },
     { id: "sound",     label: "ALERT TONE",   value: !!t.sound },
+    { id: "ask_share_status", label: "ASK TO SHARE", value: askShareStatus },
     { id: "clear_inbox", label: "CLEAR INBOX", value: inbox.length ? `${inbox.length} PAGES` : "EMPTY" },
     { id: "focus_automation", label: "FOCUS SCHEDULE", value: focusScheduleSummary(focusAutomation, focusAutomationStatus.nextTriggerAt) },
     { id: "lcdColor",  label: "SCREEN",       value: t.lcdColor.toUpperCase() },
@@ -396,7 +603,9 @@ export function App() {
     { id: "font",      label: "FONT",         value: t.font.toUpperCase() },
     { id: "study_apps",label: "STUDY APPS",   value: studyApps.length ? studyApps.length + " SET" : "CONFIGURE" },
     { id: "emergency_contact", label: "EMERGENCY SOS", value: emergContact.name || "NOT SET" },
+    { id: "blocked_ucns", label: "BLOCKED UCNs", value: blockedUcns.length ? `${blockedUcns.length} BLOCKED` : "MANAGE" },
     { id: "about",     label: "ABOUT PAGEME", value: "VIEW" },
+    { id: "delete_account", label: "DELETE ACCOUNT", value: "PERMANENT" },
     { id: "deactivate",label: "RE-RUN SETUP", value: "START" },
   ];
 
@@ -449,14 +658,217 @@ export function App() {
     triggerIncomingRef.current = triggerIncoming;
   }, [triggerIncoming]);
 
+  const syncNetworkMessages = React.useCallback(async () => {
+    if (!activated || messageSyncBusyRef.current) return;
+    const capCode = normalizeUcn(localStorage.getItem("pageme_cap_code") || "");
+    const sessionToken = getSessionToken();
+    const cursorKey = messageCursorStorageKey(capCode);
+    if (!capCode || !sessionToken || !cursorKey) return;
+
+    messageSyncBusyRef.current = true;
+    try {
+      const outboxKey = `pageme_outbox_${capCode}`;
+      const pending = readJsonStorage(outboxKey, null);
+      if (pending && pending.clientMessageId && pending.toUcn && pending.message) {
+        const queued = await postPageMe({
+          action: "sendMessage", fromUcn: capCode, sessionToken,
+          toUcn: pending.toUcn, message: pending.message, type: pending.type,
+          clientMessageId: pending.clientMessageId, replyToId: pending.replyToId || "",
+        });
+        if (queued?.status === "success" && queued.message) {
+          const withPending = mergeNetworkMessages(inboxRef.current, [queued.message], capCode);
+          inboxRef.current = withPending;
+          setInbox(withPending);
+          localStorage.removeItem(outboxKey);
+        } else if (!isRetryableMessageError(queued?.code)) {
+          localStorage.removeItem(outboxKey);
+        }
+      }
+
+      const afterRevision = Math.max(0, Number(localStorage.getItem(cursorKey) || 0));
+      let nextCursor = afterRevision;
+      let response = null;
+      const serverMessages = [];
+      for (let page = 0; page < 5; page++) {
+        const requestCursor = nextCursor;
+        response = await postPageMe({
+          action: "syncMessages", capCode, sessionToken, afterRevision: requestCursor, limit: 200,
+        });
+        if (!response || response.status !== "success") {
+          if (response?.code === "AUTH_REQUIRED") showToast("Sign in again to receive PageMe pages.");
+          return;
+        }
+        if (Array.isArray(response.messages)) serverMessages.push(...response.messages);
+        const responseCursor = Number(response.cursor);
+        if (Number.isFinite(responseCursor)) nextCursor = Math.max(nextCursor, responseCursor);
+        if (!response.hasMore || responseCursor <= requestCursor) break;
+      }
+
+      const currentInbox = inboxRef.current;
+      const freshIncoming = newIncomingNetworkMessages(currentInbox, serverMessages, capCode)
+        .sort((left, right) => Date.parse(right.createdAt || "") - Date.parse(left.createdAt || ""));
+      const merged = pruneExpiredNetworkMessages(
+        mergeNetworkMessages(currentInbox, serverMessages, capCode),
+        response?.retentionDays,
+        response?.serverTime,
+      );
+      inboxRef.current = merged;
+      setInbox(merged);
+      localStorage.setItem(cursorKey, String(nextCursor));
+      const nativeMessaging = window.Capacitor?.Plugins?.PageMeMessaging;
+      if (nativeMessaging && typeof nativeMessaging.updateSyncCursor === "function") {
+        nativeMessaging.updateSyncCursor({ cursor: nextCursor }).catch(() => {});
+      }
+
+      if (freshIncoming.length > 0) {
+        const newest = freshIncoming[0];
+        const isFocused = focusLockUntil > Date.now();
+        if (!(isFocused && focusSilentPages)) {
+          setIncoming(newest);
+          setLedBlink(true);
+          pageAlert({ enabled: t.sound });
+          setScreen(current => (
+            current === "home" || current === "incoming" || current === "boot" ? "incoming" : current
+          ));
+        }
+      }
+    } catch (error) {
+      if (document.visibilityState === "visible") console.warn("PageMe message sync failed", error);
+    } finally {
+      messageSyncBusyRef.current = false;
+    }
+  }, [activated, focusLockUntil, focusSilentPages, showToast, t.sound]);
+
+  React.useEffect(() => {
+    if (!activated) return;
+    const refresh = () => {
+      if (document.visibilityState === "visible") syncNetworkMessages();
+    };
+    syncNetworkMessages();
+    const interval = setInterval(refresh, MESSAGE_SYNC_INTERVAL_MS);
+    window.addEventListener("focus", refresh);
+    window.addEventListener("pagemePushMessageReceived", syncNetworkMessages);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("pagemePushMessageReceived", syncNetworkMessages);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [activated, syncNetworkMessages]);
+
+  React.useEffect(() => {
+    if (!activated || !window.Capacitor) return;
+    const plugin = window.Capacitor.Plugins?.PageMeMessaging;
+    const capCode = normalizeUcn(localStorage.getItem("pageme_cap_code") || "");
+    const sessionToken = getSessionToken();
+    if (!plugin || !capCode || !sessionToken) return;
+
+    let disposed = false;
+    const handles = [];
+    const registerToken = async (registration) => {
+      if (disposed || !registration?.configured || !registration.token || !registration.deviceId) return;
+      const response = await postPageMe({
+        action: "registerDevice", capCode, sessionToken,
+        deviceId: registration.deviceId, pushToken: registration.token, platform: "android",
+      });
+      if (response?.code === "AUTH_REQUIRED") showToast("Sign in again to enable PageMe delivery.");
+    };
+
+    const consumeNativeMessages = async () => {
+      if (disposed || typeof plugin.consumePendingMessages !== "function") return;
+      const pending = await plugin.consumePendingMessages();
+      if (pending?.authRequired) showToast("Sign in again to receive PageMe pages.");
+      const messages = Array.isArray(pending?.messages) ? pending.messages : [];
+      const cursorKey = messageCursorStorageKey(capCode);
+      if (!messages.length) return;
+
+      const currentInbox = inboxRef.current;
+      const freshIncoming = newIncomingNetworkMessages(currentInbox, messages, capCode)
+        .sort((left, right) => Date.parse(right.createdAt || "") - Date.parse(left.createdAt || ""));
+      const merged = mergeNetworkMessages(currentInbox, messages, capCode);
+      const storageKey = inboxStorageKey(capCode);
+      if (!storageKey || !writeJsonStorage(storageKey, merged)) {
+        throw new Error("PageMe could not safely store background pages.");
+      }
+      inboxRef.current = merged;
+      setInbox(merged);
+      const nativeCursor = Number(pending?.cursor);
+      if (cursorKey && Number.isFinite(nativeCursor)) {
+        const currentCursor = Math.max(0, Number(localStorage.getItem(cursorKey) || 0));
+        localStorage.setItem(cursorKey, String(Math.max(currentCursor, nativeCursor)));
+        if (typeof plugin.acknowledgePendingMessages === "function") {
+          await plugin.acknowledgePendingMessages({ cursor: nativeCursor });
+        }
+      }
+      if (freshIncoming.length && !(focusLockUntil > Date.now() && focusSilentPages)) {
+        setIncoming(freshIncoming[0]);
+        setLedBlink(true);
+        pageAlert({ enabled: t.sound });
+        setScreen(current => (
+          current === "home" || current === "incoming" || current === "boot" ? "incoming" : current
+        ));
+      }
+    };
+
+    const setup = async () => {
+      try {
+        const cursorKey = messageCursorStorageKey(capCode);
+        const cursor = cursorKey ? Math.max(0, Number(localStorage.getItem(cursorKey) || 0)) : 0;
+        if (typeof plugin.configureBackgroundSync === "function") {
+          await plugin.configureBackgroundSync({ endpoint: PAGEME_SCRIPT_URL, capCode, cursor });
+        }
+        await consumeNativeMessages();
+        const registration = await plugin.getPushRegistration();
+        await registerToken(registration);
+        if (registration?.pending) {
+          await plugin.consumePendingSync();
+          syncNetworkMessages();
+        }
+        handles.push(await plugin.addListener("messagePushReceived", async () => {
+          try {
+            await consumeNativeMessages();
+            await plugin.consumePendingSync();
+          } catch (_) {}
+          syncNetworkMessages();
+        }));
+        handles.push(await plugin.addListener("pushTokenChanged", async (event) => {
+          const latest = event?.token && event?.deviceId
+            ? { configured: true, token: event.token, deviceId: event.deviceId }
+            : await plugin.getPushRegistration();
+          await registerToken(latest);
+        }));
+      } catch (error) {
+        console.warn("PageMe push registration is unavailable", error);
+      }
+    };
+    setup();
+    return () => {
+      disposed = true;
+      handles.forEach(handle => {
+        if (handle && typeof handle.remove === "function") handle.remove();
+      });
+    };
+  }, [activated, focusLockUntil, focusSilentPages, showToast, syncNetworkMessages, t.sound]);
+
   React.useEffect(() => {
     if (screen !== "read" || !readingId) return;
+    const current = inboxRef.current.find((message) => message.id === readingId);
     setInbox((prev) => {
       const msg = prev.find((m) => m.id === readingId);
       if (!msg || msg.read) return prev;
       return prev.map((m) => m.id === readingId ? { ...m, read: true } : m);
     });
-  }, [screen, readingId]);
+    if (current?.source === "pageme-network" && current.direction === "incoming" && !current.read) {
+      const capCode = normalizeUcn(localStorage.getItem("pageme_cap_code") || "");
+      const sessionToken = getSessionToken();
+      if (capCode && sessionToken) {
+        postPageMe({
+          action: "markRead", capCode, sessionToken, messageIds: [current.serverMessageId || current.id],
+        }).then(() => syncNetworkMessages()).catch(() => {});
+      }
+    }
+  }, [screen, readingId, syncNetworkMessages]);
 
   React.useEffect(() => {
     if (!activated) return;
@@ -688,6 +1100,8 @@ export function App() {
       const remaining = focusLockUntil - Date.now();
       const timer = setTimeout(() => {
         updateFocusLock(0); updateFocusSoundEnabled(false); updateFocusSilentPages(false);
+        recordProductEvent("focus_completed", "focus", activeStatusLink?.token || "");
+        if (activeStatusLink?.context === "focus") revokeActiveStatus("focus");
         setNow(new Date());
         setScreen((curr) => curr === "focus-locked" ? "home" : curr);
         if (t.sound) {
@@ -697,7 +1111,7 @@ export function App() {
       }, remaining + 50);
       return () => clearTimeout(timer);
     }
-  }, [focusLockUntil, t.sound]);
+  }, [focusLockUntil, t.sound, activeStatusLink, recordProductEvent, revokeActiveStatus]);
 
   React.useEffect(() => {
     if (activated) {
@@ -759,12 +1173,13 @@ export function App() {
             emergContact: readJsonStorage(`pageme_emergency_contact_${ucn}`, {}),
             focusSilentPages: localStorage.getItem("pageme_focus_silent_pages") === "true",
             focusSoundEnabled: localStorage.getItem("pageme_focus_sound_enabled") === "true",
+            askShareStatus: localStorage.getItem(STATUS_SHARE_SETTING_KEY) !== "false",
           }
         });
       } catch (e) { /* silent fail */ }
     }, 4000);
     return () => clearTimeout(timer);
-  }, [activated, studyApps, emergContact, focusSilentPages, focusSoundEnabled]);
+  }, [activated, studyApps, emergContact, focusSilentPages, focusSoundEnabled, askShareStatus]);
 
   React.useEffect(() => {
     if (!navigator.getBattery) return;
@@ -855,6 +1270,41 @@ export function App() {
   const inEmergencyWindow = emergencyUntil > Date.now();
   const bypassPinCheck = inEmergencyWindow || studyAppActive;
 
+  const startFocusSession = (lockUntil) => {
+    if (focusSoundEnabled) startFocusSound();
+    updateFocusLock(lockUntil);
+    recordProductEvent("focus_started", "focus", activeStatusLink?.token || "");
+    setStatusShareContext(null);
+    setStatusShareError("");
+    setScreen("home");
+  };
+
+  const openStatusShare = (context) => {
+    setStatusShareContext(context);
+    setStatusShareSel(0);
+    setStatusShareError("");
+    setStatusShareBusy(false);
+    setScreen("status-share");
+  };
+
+  const performStatusShareAction = async () => {
+    if (!statusShareContext || statusShareBusy) return;
+    setStatusShareBusy(true);
+    setStatusShareError("");
+    try {
+      const request = {
+        context: statusShareContext.context,
+        focusEndsAt: statusShareContext.focusEndsAt || 0,
+      };
+      if (statusShareContext.copyOnly) await copyStatusLink(request);
+      else await shareStatus(request);
+    } catch (error) {
+      setStatusShareError(error?.message || "Status sharing is unavailable");
+    } finally {
+      setStatusShareBusy(false);
+    }
+  };
+
   const press = (b) => { buttonClick({ enabled: t.sound }); handleButton(b); };
 
   function handleButton(b) {
@@ -882,6 +1332,25 @@ export function App() {
         setScreen("home");
         setTimeout(checkPinStatus, 100);
       } else { setScreen("home"); }
+      return;
+    }
+    if (screen === "status-share") {
+      if (b === "up") setStatusShareSel(0);
+      if (b === "down") setStatusShareSel(1);
+      if (b === "esc") {
+        setStatusShareContext(null);
+        setStatusShareError("");
+        setScreen(statusShareContext?.returnScreen || "menu");
+      }
+      if (b === "send") {
+        if (statusShareSel === 0) performStatusShareAction();
+        else if (statusShareContext?.context === "focus") startFocusSession(statusShareContext.focusEndsAt);
+        else {
+          setStatusShareContext(null);
+          setStatusShareError("");
+          setScreen(statusShareContext?.returnScreen || "menu");
+        }
+      }
       return;
     }
     if (screen === "alarm") {
@@ -1039,6 +1508,9 @@ export function App() {
           if (focusLockUntil > Date.now()) { setScreen("focus-locked"); setTimeout(() => setScreen("menu"), 2500); }
           else { setTimerSel(0); setScreen("timer"); }
         }
+        if (item.id === "share_status") {
+          openStatusShare({ context: "manual", copyOnly: true, returnScreen: "menu" });
+        }
         if (item.id === "settings") { setSetSel(0); setScreen("settings"); }
         if (item.id === "exit") {
           if (focusLockUntil > Date.now()) { setScreen("focus-locked"); setTimeout(() => setScreen("menu"), 2500); }
@@ -1091,7 +1563,15 @@ export function App() {
       if (b === "down") setClearInboxSel(1);
       if (b === "send" || b === "read") {
         if (clearInboxSel === 1) {
+          const capCode = normalizeUcn(localStorage.getItem("pageme_cap_code") || "");
+          const sessionToken = getSessionToken();
+          if (capCode && sessionToken && inbox.some(message => message.source === "pageme-network")) {
+            postPageMe({ action: "clearMessages", capCode, sessionToken })
+              .then(() => syncNetworkMessages())
+              .catch(() => showToast("Local inbox cleared. Server cleanup will retry later."));
+          }
           setInbox([]);
+          inboxRef.current = [];
           if (inboxScopeRef.current) writeJsonStorage(inboxScopeRef.current, []);
           setIncoming(null); setReadingId(null); setInboxSel(0);
           setInboxViewMode("categories");
@@ -1099,6 +1579,36 @@ export function App() {
         }
         setScreen(clearInboxReturnScreen.current);
       }
+      return;
+    }
+    if (screen === "delete-account") {
+      if (accountDeleting) return;
+      if (b === "esc") { setScreen("settings"); return; }
+      if (b === "up") setDeleteAccountSel(0);
+      if (b === "down") setDeleteAccountSel(1);
+      if (b === "send" || b === "read") {
+        if (deleteAccountSel === 1) requestAccountDeletion();
+        else setScreen("settings");
+      }
+      return;
+    }
+    if (screen === "message-actions") {
+      if (messageActionBusy) return;
+      if (b === "esc") { setScreen("read"); return; }
+      if (b === "up") setMessageActionSel((selected) => Math.max(0, selected - 1));
+      if (b === "down") setMessageActionSel((selected) => Math.min(2, selected + 1));
+      if (b === "send" || b === "read") {
+        if (messageActionSel === 0) setScreen("read");
+        else performMessageSafetyAction(messageActionSel === 2);
+      }
+      return;
+    }
+    if (screen === "blocked-users") {
+      if (blockedBusy) return;
+      if (b === "esc") { setScreen("settings"); return; }
+      if (b === "up") setBlockedSel((selected) => Math.max(0, selected - 1));
+      if (b === "down") setBlockedSel((selected) => Math.min(Math.max(0, blockedUcns.length - 1), selected + 1));
+      if ((b === "send" || b === "read") && blockedUcns[blockedSel]) unblockSelectedUcn();
       return;
     }
     if (screen === "read") {
@@ -1113,25 +1623,43 @@ export function App() {
       }
       if (b === "send") {
         const m = inbox.find((mm) => mm.id === readingId);
-        if (m && m.canReply) { const replyTo = String(m.from || ""); setCompTo(replyTo); setCompBody(""); setCompMode(m.type === "code" ? "code" : "text"); setCompField("body"); setCompReplyKey(m.replyKey || ""); setCompCursor({ to: replyTo.length, body: 0 }); setShowKb(true); setScreen("compose"); }
+        if (m && m.canReply) { const replyTo = String(m.from || ""); setCompTo(replyTo); setCompBody(""); setCompMode(m.type === "code" ? "code" : "text"); setCompField("body"); setCompReplyKey(m.serverMessageId || m.replyKey || ""); setCompClientMessageId(""); setCompCursor({ to: replyTo.length, body: 0 }); setShowKb(true); setScreen("compose"); }
+      }
+      if (b === "menu") {
+        const m = inbox.find((mm) => mm.id === readingId);
+        if (m?.source === "pageme-network" && m.direction === "incoming") {
+          setMessageActionSel(0);
+          setScreen("message-actions");
+        }
       }
       return;
     }
     if (screen === "compose") {
-      if (b === "esc") { if (showKb) setShowKb(false); else setScreen("menu"); }
+      if (b === "esc") {
+        if (showKb) setShowKb(false);
+        else if (deepLinkAccess) {
+          setInboundStatusToken(""); setDeepLinkAccess(false); setScreen("boot"); setBootStage(0);
+        } else setScreen("menu");
+      }
       if (b === "menu") setCompMode((m) => m === "text" ? "code" : "text");
       if (b === "up" || b === "down") setCompField((f) => f === "to" ? "body" : "to");
       if (b === "send") { if (compTo && compBody) doSend(); else setShowKb(true); }
       return;
     }
-    if (screen === "sending") { if (b === "esc" || b === "send") setScreen("home"); return; }
+    if (screen === "sending") {
+      if (b === "esc" || b === "send") {
+        if (deepLinkAccess) { setInboundStatusToken(""); setDeepLinkAccess(false); setScreen("boot"); setBootStage(0); }
+        else setScreen("home");
+      }
+      return;
+    }
     if (screen === "codes") {
       if (b === "esc") setScreen("menu");
       if (b === "up") setCodeSel((s) => Math.max(0, s - 1));
       if (b === "down") setCodeSel((s) => Math.min(PAGER_CODES.length - 1, s + 1));
       if (b === "send") {
         const c = PAGER_CODES[codeSel];
-        setCompTo(""); setCompBody(c.code); setCompMode("code"); setCompField("to"); setCompReplyKey(""); setCompCursor({ to: 0, body: c.code.length }); setShowKb(true); setScreen("compose");
+        setCompTo(""); setCompBody(c.code); setCompMode("code"); setCompField("to"); setCompReplyKey(""); setCompClientMessageId(""); setCompCursor({ to: 0, body: c.code.length }); setShowKb(true); setScreen("compose");
       }
       return;
     }
@@ -1143,6 +1671,11 @@ export function App() {
         const it = settingsItems[setSel];
         if (it.id === "backlight") setTweak("backlight", !t.backlight);
         if (it.id === "sound") setTweak("sound", !t.sound);
+        if (it.id === "ask_share_status") {
+          const enabled = !askShareStatus;
+          setAskShareStatus(enabled);
+          localStorage.setItem(STATUS_SHARE_SETTING_KEY, enabled ? "true" : "false");
+        }
         if (it.id === "clear_inbox") { clearInboxReturnScreen.current = "settings"; setClearInboxSel(0); setScreen("clear-inbox"); }
         if (it.id === "focus_automation") { loadFocusAutomation().catch(() => {}); setScreen("focus-automation"); }
         if (it.id === "lcdColor") setTweak("lcdColor", cycle(["green","amber","grayscale"], t.lcdColor));
@@ -1150,7 +1683,13 @@ export function App() {
         if (it.id === "font") setTweak("font", cycle(["lcd","pixel","segment"], t.font));
         if (it.id === "study_apps") setScreen("study-config");
         if (it.id === "emergency_contact") setScreen("emergency-contact-config");
+        if (it.id === "blocked_ucns") { setBlockedSel(0); setScreen("blocked-users"); loadBlockedUcns(); }
         if (it.id === "about") setScreen("about");
+        if (it.id === "delete_account") {
+          if (focusLockUntil > Date.now()) { setScreen("focus-locked"); setTimeout(() => setScreen("settings"), 2500); return; }
+          setDeleteAccountSel(0);
+          setScreen("delete-account");
+        }
         if (it.id === "deactivate") {
           if (focusLockUntil > Date.now()) { setScreen("focus-locked"); setTimeout(() => setScreen("settings"), 2500); return; }
           localStorage.removeItem("pageme_setup_step");
@@ -1197,9 +1736,14 @@ export function App() {
       if (b === "send") {
         updateFocusSilentPages(choiceSel === 1);
         const lockUntil = Date.now() + pendingDuration;
-        if (focusSoundEnabled) startFocusSound();
-        updateFocusLock(lockUntil);
-        setScreen("home");
+        if (shouldOfferFocusShare()) {
+          openStatusShare({
+            context: "focus", focusEndsAt: lockUntil, copyOnly: true,
+            returnScreen: "focus-pages-choice",
+          });
+        } else {
+          startFocusSession(lockUntil);
+        }
       }
       return;
     }
@@ -1217,26 +1761,176 @@ export function App() {
     }
   }
 
-  function openCompose() { setCompTo(""); setCompBody(""); setCompMode("text"); setCompField("to"); setCompReplyKey(""); setCompCursor({ to: 0, body: 0 }); setShowKb(true); }
+  function openCompose() { setCompTo(""); setCompBody(""); setCompMode("text"); setCompField("to"); setCompReplyKey(""); setCompClientMessageId(""); setCompCursor({ to: 0, body: 0 }); setShowKb(true); }
+
+  async function loadBlockedUcns() {
+    const capCode = normalizeUcn(localStorage.getItem("pageme_cap_code") || "");
+    const sessionToken = getSessionToken();
+    if (!capCode || !sessionToken) {
+      setBlockedUcns([]);
+      showToast("Sign in again to manage blocked UCNs.");
+      return;
+    }
+    setBlockedLoading(true);
+    try {
+      const response = await postPageMe({ action: "listBlocks", capCode, sessionToken });
+      if (response?.status !== "success") {
+        showToast(response?.error || "Blocked UCNs could not be loaded.");
+        return;
+      }
+      const next = Array.isArray(response.blockedUcns)
+        ? response.blockedUcns.map(normalizeUcn).filter(Boolean)
+        : [];
+      setBlockedUcns([...new Set(next)]);
+      setBlockedSel((selected) => Math.min(selected, Math.max(0, next.length - 1)));
+    } catch (_) {
+      showToast("Blocked UCNs could not reach the PageMe server.");
+    } finally {
+      setBlockedLoading(false);
+    }
+  }
+
+  async function performMessageSafetyAction(report) {
+    if (messageActionBusy) return;
+    const message = inboxRef.current.find((item) => item.id === readingId);
+    const senderUcn = normalizeUcn(message?.from || "");
+    const messageId = message?.serverMessageId || message?.id || "";
+    const capCode = normalizeUcn(localStorage.getItem("pageme_cap_code") || "");
+    const sessionToken = getSessionToken();
+    if (!message || message.source !== "pageme-network" || message.direction !== "incoming"
+        || !senderUcn || !capCode || !sessionToken) {
+      showToast("This PageMe sender cannot be managed.");
+      setScreen("read");
+      return;
+    }
+    setMessageActionBusy(true);
+    try {
+      const response = report
+        ? await postPageMe({
+          action: "reportMessage", capCode, sessionToken, messageId,
+          reason: "Unwanted PageMe message", blockSender: true,
+        })
+        : await postPageMe({ action: "blockUser", capCode, sessionToken, blockedUcn: senderUcn });
+      if (response?.status !== "success") {
+        showToast(response?.error || "The sender could not be blocked.");
+        return;
+      }
+      setBlockedUcns((current) => current.includes(senderUcn) ? current : [...current, senderUcn].sort());
+      showToast(report ? "MESSAGE REPORTED · SENDER BLOCKED" : "SENDER BLOCKED");
+      setScreen("read");
+    } catch (_) {
+      showToast("The safety request could not reach PageMe.");
+    } finally {
+      setMessageActionBusy(false);
+    }
+  }
+
+  async function unblockSelectedUcn() {
+    const blockedUcn = blockedUcns[blockedSel];
+    const capCode = normalizeUcn(localStorage.getItem("pageme_cap_code") || "");
+    const sessionToken = getSessionToken();
+    if (!blockedUcn || !capCode || !sessionToken || blockedBusy) return;
+    setBlockedBusy(true);
+    try {
+      const response = await postPageMe({ action: "unblockUser", capCode, sessionToken, blockedUcn });
+      if (response?.status !== "success") {
+        showToast(response?.error || "The UCN could not be unblocked.");
+        return;
+      }
+      const remaining = blockedUcns.filter((ucn) => ucn !== blockedUcn);
+      setBlockedUcns(remaining);
+      setBlockedSel((selected) => Math.min(selected, Math.max(0, remaining.length - 1)));
+      showToast(`${blockedUcn} UNBLOCKED`);
+    } catch (_) {
+      showToast("The unblock request could not reach PageMe.");
+    } finally {
+      setBlockedBusy(false);
+    }
+  }
+
+  async function requestAccountDeletion() {
+    if (accountDeleting) return;
+    const capCode = normalizeUcn(localStorage.getItem("pageme_cap_code") || "");
+    const sessionToken = getSessionToken();
+    if (!capCode || !sessionToken) {
+      showToast("Sign in again before deleting this account.");
+      return;
+    }
+    setAccountDeleting(true);
+    try {
+      const response = await postPageMe({
+        action: "deleteAccount", capCode, sessionToken, confirmation: capCode,
+      });
+      if (!response || response.status !== "success" || !response.deleted) {
+        showToast(response?.error || "Account deletion could not be completed.");
+        return;
+      }
+
+      const appearance = localStorage.getItem("pageme_appearance_settings");
+      const nativeMessaging = window.Capacitor?.Plugins?.PageMeMessaging;
+      if (nativeMessaging && typeof nativeMessaging.clearBackgroundSync === "function") {
+        await nativeMessaging.clearBackgroundSync().catch(() => {});
+      }
+      await clearSessionTokenSecure();
+      Object.keys(localStorage)
+        .filter(key => key.startsWith("pageme_"))
+        .forEach(key => localStorage.removeItem(key));
+      if (appearance) localStorage.setItem("pageme_appearance_settings", appearance);
+      inboxRef.current = [];
+      setInbox([]);
+      setActivated(false);
+      setScreen("boot");
+      setBootStage(0);
+      showToast("PAGEME ACCOUNT DELETED");
+    } catch (error) {
+      showToast("Account deletion could not reach the PageMe server.");
+    } finally {
+      setAccountDeleting(false);
+    }
+  }
 
   async function doSend() {
     setScreen("sending"); setSentOk(false); setShowKb(false);
     let success = false;
     if (/^[A-Za-z]{3}-\d{1,4}$/.test(compTo.trim())) {
-      const fromUcn = localStorage.getItem("pageme_cap_code") || "UNKNOWN";
-      const fromName = localStorage.getItem("pageme_user_name") || "Unknown";
+      const fromUcn = normalizeUcn(localStorage.getItem("pageme_cap_code") || "");
       const sessionToken = getSessionToken();
-      if (!sessionToken) {
+      if (!fromUcn || !sessionToken) {
         showToast("Sign in again before sending a page.");
       } else {
         try {
+          const clientMessageId = compClientMessageId || createClientMessageId(fromUcn);
+          setCompClientMessageId(clientMessageId);
+          writeJsonStorage(`pageme_outbox_${fromUcn}`, {
+            clientMessageId, toUcn: compTo.trim().toUpperCase(), message: compBody,
+            type: compMode, replyToId: compReplyKey, createdAt: new Date().toISOString(),
+          });
           const res = await postPageMe({
-            action: "page", toUcn: compTo.trim().toUpperCase(), fromUcn,
-            fromName, message: compBody, sessionToken,
+            action: "sendMessage", toUcn: compTo.trim().toUpperCase(), fromUcn,
+            message: compBody, type: compMode, sessionToken,
+            clientMessageId,
+            replyToId: compReplyKey,
           });
           success = res && res.status === "success";
+          if (success && res.message) {
+            const merged = mergeNetworkMessages(inboxRef.current, [res.message], fromUcn);
+            inboxRef.current = merged;
+            setInbox(merged);
+            localStorage.removeItem(`pageme_outbox_${fromUcn}`);
+            setCompClientMessageId("");
+            if (inboundStatusToken) {
+              recordProductEvent("status_page_sent", "status_link", inboundStatusToken);
+            }
+          } else if (res?.error) {
+            if (!isRetryableMessageError(res.code)) {
+              localStorage.removeItem(`pageme_outbox_${fromUcn}`);
+              setCompClientMessageId("");
+            }
+            showToast(res.error);
+          }
         } catch (error) {
           console.warn("Page delivery failed", error);
+          showToast("Page could not be queued. Check your connection and try again.");
         }
       }
     } else if (window.Capacitor) {
@@ -1254,7 +1948,18 @@ export function App() {
     }
     setSentOk(success);
     blip({ freq: success ? 1800 : 800, dur: 0.06, vol: 0.12, enabled: t.sound });
-    setTimeout(() => setScreen("home"), 1400);
+    setTimeout(() => {
+      if (success && deepLinkAccess) {
+        setInboundStatusToken("");
+        setDeepLinkAccess(false);
+        setScreen("boot");
+        setBootStage(0);
+      } else if (success) {
+        setInboundStatusToken("");
+        setScreen("home");
+      }
+      else { setShowKb(true); setScreen("compose"); }
+    }, 1400);
   }
 
   function onKb(k) {
@@ -1299,11 +2004,12 @@ export function App() {
   }
 
   // Activation gate
-  if (!activated) {
+  if (!activated && !deepLinkAccess) {
     return (
       <>
         <ActivationScreen
           reAuthMode={reAuthNeeded}
+          onShareStatus={shareStatus}
           onActivate={(settingsFromSheet) => {
             localStorage.setItem("pageme_last_active", String(Date.now()));
             if (settingsFromSheet) {
@@ -1318,7 +2024,12 @@ export function App() {
               }
               if (typeof settingsFromSheet.focusSilentPages === 'boolean') updateFocusSilentPages(settingsFromSheet.focusSilentPages);
               if (typeof settingsFromSheet.focusSoundEnabled === 'boolean') updateFocusSoundEnabled(settingsFromSheet.focusSoundEnabled);
+              if (typeof settingsFromSheet.askShareStatus === 'boolean') {
+                setAskShareStatus(settingsFromSheet.askShareStatus);
+                localStorage.setItem(STATUS_SHARE_SETTING_KEY, settingsFromSheet.askShareStatus ? "true" : "false");
+              }
             }
+            recordProductEvent("activation_completed", "activation", activeStatusLink?.token || "");
             setActivated(true);
           }}
           soundOn={t.sound}
@@ -1380,17 +2091,31 @@ export function App() {
     const m = inbox.find((mm) => mm.id === readingId);
     body = <ReadScreen msg={m} codeMeaning={m && m.type === "code" ? findCodeMeaning(m.text) : null} />;
   }
+  else if (screen === "message-actions") {
+    const m = inbox.find((message) => message.id === readingId);
+    body = <MessageActionsScreen sender={m?.from || ""} selected={messageActionSel} busy={messageActionBusy} />;
+  }
   else if (screen === "compose") body = <ComposeScreen to={compTo} body={compBody} field={compField} mode={compMode} cursor={compCursor} />;
   else if (screen === "sending") body = <SendingScreen to={compTo} sentOk={sentOk} />;
   else if (screen === "codes") body = <CodesScreen codes={PAGER_CODES} selected={codeSel} />;
   else if (screen === "settings") body = <SettingsScreen items={settingsItems} selected={setSel} />;
+  else if (screen === "blocked-users") body = <BlockedUsersScreen items={blockedUcns} selected={blockedSel} loading={blockedLoading} busy={blockedBusy} />;
   else if (screen === "clear-inbox") body = <ClearInboxScreen count={inbox.length} selected={clearInboxSel} />;
+  else if (screen === "delete-account") body = <DeleteAccountScreen ucn={localStorage.getItem("pageme_cap_code") || ""} selected={deleteAccountSel} deleting={accountDeleting} />;
   else if (screen === "incoming") body = <IncomingOverlay msg={incoming} codeMeaning={incoming && incoming.type === "code" ? findCodeMeaning(incoming.text) : null} />;
   else if (screen === "about") body = <AboutScreen />;
   else if (screen === "timer") body = <TimerScreen options={timerOptions} selected={timerSel} activeLockUntil={focusLockUntil} />;
   else if (screen === "timer-custom") body = <CustomTimerScreen val={customTimerVal} />;
   else if (screen === "focus-sound-choice") body = <FocusSoundChoiceScreen selectedIndex={choiceSel} />;
   else if (screen === "focus-pages-choice") body = <FocusPagesChoiceScreen selectedIndex={choiceSel} />;
+  else if (screen === "status-share") body = <StatusShareScreen
+    selectedIndex={statusShareSel}
+    context={statusShareContext?.context || "manual"}
+    focusEndsAt={statusShareContext?.focusEndsAt || 0}
+    copyOnly={statusShareContext?.copyOnly !== false}
+    busy={statusShareBusy}
+    error={statusShareError}
+  />;
   else if (screen === "focus-locked") body = <FocusLockedScreen activeLockUntil={focusLockUntil} />;
   else if (screen === "study-apps") body = <StudyAppsScreen apps={studyApps} selected={studySel} />;
   else if (screen === "emergency") body = <EmergencyScreen options={emergOptions} selected={emergSel} />;
@@ -1401,8 +2126,9 @@ export function App() {
   // Screens that show a selectable list — button should read "SELECT" to guide the user
   const selectableScreens = new Set([
     "menu", "inbox", "codes", "settings", "timer",
-    "study-apps", "emergency", "alarm", "clear-inbox",
-    "focus-sound-choice", "focus-pages-choice",
+    "study-apps", "emergency", "alarm", "clear-inbox", "delete-account",
+    "message-actions", "blocked-users",
+    "focus-sound-choice", "focus-pages-choice", "status-share",
   ]);
   const primaryAction =
       screen === "home"     ? "menu"

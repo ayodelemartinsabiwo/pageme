@@ -51,6 +51,7 @@ export function getAppSourceCategory(source) {
   if (src === "msgr" || src === "messenger" || src === "orca") return "MESSENGER";
   if (src === "alarm" || src === "clock" || src === "deskclock") return "ALARMS";
   if (src === "google" || src === "googlequicksearchbox") return "GOOGLE";
+  if (src === "pageme-network" || src === "ucn") return "PAGEME";
   if (src === "sms" || src === "messages" || src === "messaging" || src === "pageme") return "SMS";
 
   let abbr = source.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();

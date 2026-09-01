@@ -75,6 +75,21 @@ test('normalizeInbox retains native conversation identity for grouping', () => {
   assert.equal(message.senderKey, 'com.whatsapp|shortcut|family-42');
 });
 
+test('normalizeInbox retains direct PageMe delivery metadata across restarts', () => {
+  const [message] = normalizeInbox([{
+    id: 'msg-123', source: 'pageme-network', from: 'AYO-001', text: 'Hello',
+    serverMessageId: 'msg-123', clientMessageId: 'LAG-002:abc', direction: 'incoming',
+    status: 'delivered', createdAt: '2026-08-27T09:30:00.000Z',
+    deliveredAt: '2026-08-27T09:31:00.000Z', readAt: '', replyToId: 'msg-100',
+    canReply: true, senderKey: 'pageme:AYO-001',
+  }]);
+
+  assert.equal(message.serverMessageId, 'msg-123');
+  assert.equal(message.direction, 'incoming');
+  assert.equal(message.status, 'delivered');
+  assert.equal(message.replyToId, 'msg-100');
+});
+
 test('duplicate detection uses stable sender identity when notification titles change', () => {
   const first = { source: 'WhatsApp', from: 'Siblings Abiwo', senderKey: 'chat-42', text: 'Hello' };
   const second = { source: 'WhatsApp', from: 'Abiwo (2 messages)', senderKey: 'chat-42', text: 'Hello' };

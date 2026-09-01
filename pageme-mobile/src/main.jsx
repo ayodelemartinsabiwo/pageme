@@ -3,9 +3,15 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { App, ErrorBoundary } from './app.jsx';
+import { loadSessionToken } from './identity.js';
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <ErrorBoundary>
-    <App />
-  </ErrorBoundary>
-);
+async function startPageMe() {
+  await loadSessionToken();
+  ReactDOM.createRoot(document.getElementById('root')).render(
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
+  );
+}
+
+startPageMe();

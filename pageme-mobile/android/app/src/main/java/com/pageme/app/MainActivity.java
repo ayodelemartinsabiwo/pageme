@@ -19,6 +19,8 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(LauncherPlugin.class);
         registerPlugin(LoraBlePlugin.class);
         registerPlugin(FocusSchedulePlugin.class);
+        registerPlugin(PageMeMessagingPlugin.class);
+        registerPlugin(SecureIdentityPlugin.class);
 
         super.onCreate(savedInstanceState);
         PagerNotificationListenerService.clearLegacyPassthroughNotifications(this);
