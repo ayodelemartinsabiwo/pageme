@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { App as CapacitorApp } from '@capacitor/app';
+import { Clipboard } from '@capacitor/clipboard';
 import { Share } from '@capacitor/share';
 import { blip, pageAlert, buttonClick, bootChime, startFocusSound, stopFocusSound } from './audio.js';
 import { PAGER_CODES, SEED_INBOX, INCOMING_QUEUE } from './data.jsx';
@@ -69,12 +70,18 @@ const MENU_ITEMS_BASE = [
 ];
 
 async function copyText(text) {
+  const value = String(text || '').trim();
+  if (!value) return false;
+  try {
+    await Clipboard.write({ string: value });
+    return true;
+  } catch (_) {}
   if (navigator.clipboard?.writeText) {
-    try { await navigator.clipboard.writeText(text); return true; }
+    try { await navigator.clipboard.writeText(value); return true; }
     catch (_) {}
   }
   const textarea = document.createElement("textarea");
-  textarea.value = text;
+  textarea.value = value;
   textarea.setAttribute("readonly", "");
   textarea.style.position = "fixed";
   textarea.style.opacity = "0";
@@ -415,8 +422,9 @@ export function App() {
 
   const copyStatusLink = React.useCallback(async ({ context, focusEndsAt = 0 }) => {
     const status = await ensureStatusLink({ context, focusEndsAt });
-    if (!(await copyText(status.url))) throw new Error("The link could not be copied on this device.");
-    showToast("STATUS LINK COPIED");
+    const text = buildStatusShareText({ context, focusEndsAt, url: status.url });
+    if (!(await copyText(text))) throw new Error("The ready-to-send status message could not be copied on this device.");
+    showToast("STATUS MESSAGE COPIED");
     return status;
   }, [ensureStatusLink, showToast]);
 

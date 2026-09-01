@@ -49,6 +49,7 @@ test('shared text describes timed and untimed status without exposing identity',
     context: 'focus', focusEndsAt: Date.now() + 3600000, url, locale: 'en-US',
   });
   assert.match(timed, /^I'm on PageMe until .+ Need me\? Send me a page:/);
+  assert.equal(timed.endsWith(url), true);
 });
 
 test('stored links fail closed after expiry or when malformed', () => {

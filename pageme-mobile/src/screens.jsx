@@ -700,7 +700,7 @@ export function StatusShareScreen({ selectedIndex, context, focusEndsAt, copyOnl
     ? `UNTIL ${safeFormatTime(new Date(Number(focusEndsAt)))}`
     : "ACTIVE FOR UP TO 4 HOURS";
   const options = [
-    copyOnly ? "COPY STATUS LINK" : "SHARE STATUS",
+    copyOnly ? "COPY READY MESSAGE" : "SHARE STATUS",
     isFocus ? "START FOCUS" : "BACK TO MENU",
   ];
   return (
