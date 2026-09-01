@@ -332,17 +332,9 @@ button { font: inherit; }
 .ucn-steps p { margin: 0; color: var(--muted); font-size: 13px; }
 .ucn-privacy { margin: 0 0 22px; color: var(--muted); font-size: 12px; line-height: 1.7; }
 .ucn-privacy a { color: var(--blue); }
-.ucn-pager { min-height: 500px; padding: 28px; color: #18210d; background: #a9c94c; border: 8px solid #272b25; border-radius: 8px; box-shadow: inset 0 0 0 2px #64772e, 0 26px 70px rgba(0, 0, 0, .32); font-family: "VT323", monospace; }
-.ucn-pager-head, .ucn-address, .ucn-controls { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.ucn-pager-head { padding-bottom: 16px; border-bottom: 2px solid rgba(24, 33, 13, .45); font-family: "Silkscreen", monospace; font-size: 11px; }
-.ucn-address { margin: 24px 0 26px; padding: 12px 14px; border: 2px solid rgba(24, 33, 13, .48); font-size: 21px; }
-.ucn-address strong { letter-spacing: 0; }
-.ucn-message { max-width: 84%; margin: 0 0 18px; padding: 13px 15px; border: 2px solid rgba(24, 33, 13, .45); }
-.ucn-message.outgoing { margin-left: auto; background: rgba(247, 249, 239, .22); }
-.ucn-message span { font-size: 16px; }
-.ucn-message p { margin: 5px 0 0; font-size: 25px; line-height: 1; }
-.ucn-status { margin: 4px 0 44px; text-align: right; font-size: 16px; }
-.ucn-controls { margin-top: auto; padding-top: 18px; border-top: 2px solid rgba(24, 33, 13, .45); font-size: 18px; }
+.ucn-app-shot { width: min(100%, 420px); margin: 0; justify-self: center; }
+.ucn-app-shot img { display: block; width: 100%; height: auto; }
+.ucn-app-shot figcaption { margin-top: 12px; color: var(--muted); font-size: 10px; text-align: center; }
 
 .install { display: grid; grid-template-columns: .9fr 1.1fr; gap: clamp(50px, 8vw, 110px); background: #0d100d; }
 .install-steps { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
@@ -460,7 +452,7 @@ button { font: inherit; }
   .hero-shade { background: rgba(5,7,5,.68); border: 0; }
   .demo-layout, .install { grid-template-columns: 1fr; }
   .ucn-layout { grid-template-columns: 1fr; }
-  .ucn-pager { width: min(100%, 520px); justify-self: center; }
+  .ucn-app-shot { width: min(100%, 390px); }
   .pager-demo { margin: 0 auto; }
   .demo-notes { max-width: none; }
   .install-actions { grid-column: 1; }
@@ -517,9 +509,7 @@ button { font: inherit; }
   .feature h3 { margin: 20px 0 9px; font-size: 21px; }
   .feature p { font-size: 13px; line-height: 1.6; }
   .ucn-layout { gap: 34px; }
-  .ucn-pager { min-height: 430px; padding: 20px; border-width: 6px; }
-  .ucn-message p { font-size: 22px; }
-  .ucn-controls { font-size: 15px; }
+  .ucn-app-shot { width: min(100%, 340px); }
   .install { gap: 34px; }
   .install-steps li { grid-template-columns: 36px 1fr; gap: 12px; padding: 22px 0; }
   .install-steps h3 { font-size: 17px; }
