@@ -700,7 +700,7 @@ export function StatusShareScreen({ selectedIndex, context, focusEndsAt, copyOnl
     ? `UNTIL ${safeFormatTime(new Date(Number(focusEndsAt)))}`
     : "ACTIVE FOR UP TO 4 HOURS";
   const options = [
-    copyOnly ? "COPY READY MESSAGE" : "SHARE STATUS",
+    copyOnly ? "COPY READY MESSAGE" : "SHARE TO WHATSAPP",
     isFocus ? "START FOCUS" : "BACK TO MENU",
   ];
   return (
@@ -710,6 +710,7 @@ export function StatusShareScreen({ selectedIndex, context, focusEndsAt, copyOnl
         FOCUS WITHOUT<br />DISAPPEARING
       </LcdLine>
       <LcdLine align="center" dim style={{ fontSize: "0.76em" }}>{endLabel}</LcdLine>
+      {!copyOnly && <LcdLine align="center" dim style={{ fontSize: "0.66em" }}>CHOOSE WHATSAPP &gt; MY STATUS</LcdLine>}
       {error && <LcdLine align="center" style={{ fontSize: "0.7em" }}>{error.toUpperCase()}</LcdLine>}
       <div style={{ marginTop: 4 }}>
         {options.map((label, index) => (

@@ -239,6 +239,30 @@ public class NotificationReceiverPlugin extends Plugin {
     }
 
     @PluginMethod
+    public void beginStatusSharePass(PluginCall call) {
+        if (!(getActivity() instanceof MainActivity)) {
+            call.resolve();
+            return;
+        }
+        getActivity().runOnUiThread(() -> {
+            ((MainActivity) getActivity()).beginExternalSystemFlow();
+            call.resolve();
+        });
+    }
+
+    @PluginMethod
+    public void endStatusSharePass(PluginCall call) {
+        if (!(getActivity() instanceof MainActivity)) {
+            call.resolve();
+            return;
+        }
+        getActivity().runOnUiThread(() -> {
+            ((MainActivity) getActivity()).completeExternalSystemFlow();
+            call.resolve();
+        });
+    }
+
+    @PluginMethod
     public void sendNotificationReply(PluginCall call) {
         String replyKey = call.getString("replyKey", "");
         String text = call.getString("text", "");

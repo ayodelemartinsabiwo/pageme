@@ -26,7 +26,7 @@ import { DEFAULT_FOCUS_SCHEDULE, focusScheduleSummary, normalizeFocusSchedule } 
 import { deleteBeforeTextCursor, insertTextAtCursor, moveTextCursor } from './compose-editing.js';
 import {
   STATUS_SHARE_SETTING_KEY,
-  askToShareStatus, buildStatusShareMessage, buildStatusShareText, clearStoredStatus, readStoredStatus,
+  askToShareStatus, buildStatusSharePayload, buildStatusShareText, clearStoredStatus, readStoredStatus,
   shouldOfferFocusShare, statusTokenFromUrl, writeStoredStatus,
 } from './status-sharing.js';
 import { ActivationScreen } from './activation.jsx';
@@ -185,6 +185,7 @@ export function App() {
   const firstActivation = React.useRef(true);
   const pinRequestPending = React.useRef(false);
   const pinVerificationTimer = React.useRef(null);
+  const statusShareRestorePending = React.useRef(false);
   const nativePagerModeWasActive = React.useRef(
     localStorage.getItem("pageme_activated") === "true"
   );
@@ -243,6 +244,14 @@ export function App() {
       const res = await NRP.isAppPinned();
       const pinned = !!res.isPinned;
       setIsPinned(pinned);
+      if (statusShareRestorePending.current) {
+        if (pinned) {
+          statusShareRestorePending.current = false;
+          pinRequestPending.current = false;
+          if (pinVerificationTimer.current) clearTimeout(pinVerificationTimer.current);
+        }
+        return;
+      }
       if (res.pagerModeActive === false || res.bypassRelaunch) return;
       if (pinned) {
         pinRequestPending.current = false;
@@ -404,21 +413,36 @@ export function App() {
 
   const shareStatus = React.useCallback(async ({ context, focusEndsAt = 0 }) => {
     const status = await ensureStatusLink({ context, focusEndsAt });
-    const message = buildStatusShareMessage({ context, focusEndsAt });
-    const text = buildStatusShareText({ context, focusEndsAt, url: status.url });
+    const payload = buildStatusSharePayload({ context, focusEndsAt, url: status.url });
     recordProductEvent("share_sheet_opened", context, status.token);
     if (window.Capacitor) {
-      await Share.share({ title: "My PageMe status", text: message, url: status.url, dialogTitle: "Share PageMe status" });
-      return status;
+      const { NotificationReceiverPlugin: NRP } = window.Capacitor.Plugins;
+      let sharePassStarted = false;
+      try {
+        if (activated && typeof NRP?.beginStatusSharePass === 'function') {
+          statusShareRestorePending.current = true;
+          await NRP.beginStatusSharePass();
+          sharePassStarted = true;
+        }
+        await Share.share(payload);
+        return status;
+      } catch (error) {
+        if (sharePassStarted && typeof NRP?.endStatusSharePass === 'function') {
+          await NRP.endStatusSharePass().catch(() => {});
+        } else {
+          statusShareRestorePending.current = false;
+        }
+        throw error;
+      }
     }
     if (navigator.share) {
-      await navigator.share({ title: "My PageMe status", text: message, url: status.url });
+      await navigator.share({ title: payload.title, text: payload.text });
       return status;
     }
-    if (!(await copyText(status.url))) throw new Error("The link could not be copied on this device.");
-    showToast("STATUS LINK COPIED");
+    if (!(await copyText(payload.text))) throw new Error("The ready-to-send status message could not be copied on this device.");
+    showToast("STATUS MESSAGE COPIED");
     return status;
-  }, [ensureStatusLink, recordProductEvent, showToast]);
+  }, [activated, ensureStatusLink, recordProductEvent, showToast]);
 
   const copyStatusLink = React.useCallback(async ({ context, focusEndsAt = 0 }) => {
     const status = await ensureStatusLink({ context, focusEndsAt });
@@ -1746,7 +1770,7 @@ export function App() {
         const lockUntil = Date.now() + pendingDuration;
         if (shouldOfferFocusShare()) {
           openStatusShare({
-            context: "focus", focusEndsAt: lockUntil, copyOnly: true,
+            context: "focus", focusEndsAt: lockUntil, copyOnly: false,
             returnScreen: "focus-pages-choice",
           });
         } else {

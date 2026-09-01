@@ -13,6 +13,7 @@ public class MainActivity extends BridgeActivity {
     private boolean screenPinRequestIssued = false;
     private final android.os.Handler pinHandler = new android.os.Handler(android.os.Looper.getMainLooper());
     private final Runnable delayedPinRequest = this::requestScreenPinning;
+    private final Runnable delayedExternalFlowCompletion = this::completeExternalSystemFlow;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(NotificationReceiverPlugin.class);
@@ -118,6 +119,7 @@ public class MainActivity extends BridgeActivity {
         screenPinRequestIssued = false;
         runOnUiThread(() -> {
             pinHandler.removeCallbacks(delayedPinRequest);
+            pinHandler.removeCallbacks(delayedExternalFlowCompletion);
             collapseHandler.removeCallbacks(collapseRunnable);
             setPagerUiActive(false);
             try { stopLockTask(); } catch (Exception ignored) {}
@@ -129,10 +131,17 @@ public class MainActivity extends BridgeActivity {
             .getBoolean(EXTERNAL_SYSTEM_FLOW_PENDING, false);
     }
 
-    private void completeExternalSystemFlow() {
+    public void completeExternalSystemFlow() {
         android.content.SharedPreferences prefs = getSharedPreferences(
             "PageMePrefs", android.content.Context.MODE_PRIVATE);
         if (!prefs.getBoolean(EXTERNAL_SYSTEM_FLOW_PENDING, false)) return;
+        if (!isResumed) return;
+        if (!hasWindowFocus()) {
+            pinHandler.removeCallbacks(delayedExternalFlowCompletion);
+            pinHandler.postDelayed(delayedExternalFlowCompletion, 150L);
+            return;
+        }
+        pinHandler.removeCallbacks(delayedExternalFlowCompletion);
         boolean restorePager = prefs.getBoolean(EXTERNAL_SYSTEM_FLOW_WAS_ACTIVE, false)
             && prefs.getBoolean("pager_mode_active", false);
         android.content.SharedPreferences.Editor editor = prefs.edit()
@@ -143,7 +152,11 @@ public class MainActivity extends BridgeActivity {
         if (restorePager) {
             screenPinRequestIssued = false;
             setPagerUiActive(true);
-            requestScreenPinning();
+            pinHandler.removeCallbacks(delayedPinRequest);
+            pinHandler.postDelayed(() -> {
+                screenPinRequestIssued = false;
+                requestScreenPinning();
+            }, 350L);
         }
     }
 
@@ -366,6 +379,7 @@ public class MainActivity extends BridgeActivity {
         isResumed = false;
         screenPinRequestIssued = false;
         pinHandler.removeCallbacks(delayedPinRequest);
+        pinHandler.removeCallbacks(delayedExternalFlowCompletion);
         collapseHandler.removeCallbacks(collapseRunnable);
         NotificationReceiverPlugin.turnOffTorch(this);
         super.onPause();
@@ -413,6 +427,9 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
+        if (hasFocus && isExternalSystemFlowActive()) {
+            completeExternalSystemFlow();
+        }
         android.content.SharedPreferences prefs = getSharedPreferences("PageMePrefs", android.content.Context.MODE_PRIVATE);
         boolean isPagerActive = prefs.getBoolean("pager_mode_active", false);
         long focusLockUntil = prefs.getLong("focus_lock_until", 0L);

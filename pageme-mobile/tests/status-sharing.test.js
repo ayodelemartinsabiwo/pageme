@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   STATUS_SHARE_ONBOARDING_KEY, STATUS_SHARE_SETTING_KEY,
-  askToShareStatus, buildStatusShareMessage, buildStatusShareText, normalizeStoredStatus,
+  askToShareStatus, buildStatusShareMessage, buildStatusSharePayload, buildStatusShareText, normalizeStoredStatus,
   shouldOfferActivationShare, shouldOfferFocusShare, statusTokenFromUrl,
 } from '../src/status-sharing.js';
 
@@ -50,6 +50,17 @@ test('shared text describes timed and untimed status without exposing identity',
   });
   assert.match(timed, /^I'm on PageMe until .+ Need me\? Send me a page:/);
   assert.equal(timed.endsWith(url), true);
+});
+
+test('native share payload keeps the leading sentence and link in one text field', () => {
+  const url = `https://ayodelemartinsabiwo.github.io/pageme/page.html?s=${token}`;
+  const payload = buildStatusSharePayload({
+    context: 'focus', focusEndsAt: Date.now() + 3600000, url, locale: 'en-US',
+  });
+  assert.equal(payload.title, 'My PageMe status');
+  assert.match(payload.text, /^I'm on PageMe until .+ Need me\? Send me a page:/);
+  assert.equal(payload.text.endsWith(url), true);
+  assert.equal(Object.hasOwn(payload, 'url'), false);
 });
 
 test('stored links fail closed after expiry or when malformed', () => {

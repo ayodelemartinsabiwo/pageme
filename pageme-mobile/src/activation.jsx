@@ -653,12 +653,12 @@ export function ActivationScreen({ onActivate, onShareStatus, soundOn, reAuthMod
             {statusShareError && <div className="act-error">{statusShareError}</div>}
             {statusShared && <div className="act-share-ok">STATUS READY · RETURNED TO PAGEME</div>}
             <button className="act-btn" onClick={shareActivationStatus} disabled={statusShareBusy}>
-              {statusShareBusy ? "Preparing secure link..." : "Share Status"}
+              {statusShareBusy ? "Preparing secure link..." : "Share to WhatsApp"}
             </button>
             <button className="act-btn primary" onClick={completeActivation} disabled={statusShareBusy}>
               Start Pager Mode
             </button>
-            <div className="act-foot small">Sharing never starts or pins PageMe. Start Pager Mode only when you are ready.</div>
+            <div className="act-foot small">Choose WhatsApp, then My status. Sharing never starts Pager Mode; start it only when you are ready.</div>
           </>
         )}
 

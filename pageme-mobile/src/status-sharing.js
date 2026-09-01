@@ -52,6 +52,14 @@ export function buildStatusShareText({ url, ...status } = {}) {
   return `${buildStatusShareMessage(status)} ${validUrl}`.trim();
 }
 
+export function buildStatusSharePayload({ url, ...status } = {}) {
+  return {
+    title: 'My PageMe status',
+    text: buildStatusShareText({ ...status, url }),
+    dialogTitle: 'Share PageMe status',
+  };
+}
+
 export function normalizeStoredStatus(value, now = Date.now()) {
   if (!value || typeof value !== 'object') return null;
   const token = normalizeStatusToken(value.token);
