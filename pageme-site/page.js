@@ -29,7 +29,7 @@
     view.setAttribute("aria-busy", "true");
     retry.hidden = true;
     if (!/^[A-Za-z0-9_-]{32,100}$/.test(token)) {
-      setState({ heading: "Invalid status link", message: "This link is incomplete or was changed. Ask the sender for a new PageMe status link." });
+      setState({ heading: "Invalid status link", message: "Ask the sender for a new link." });
       return;
     }
     if (!config.apiUrl) {
@@ -49,21 +49,21 @@
         openApp.href = window.location.href;
         setState({
           heading: "They are using PageMe",
-          message: "Need them? Open PageMe and send a short, direct page without pulling them into a distracting feed.",
+          message: "Need them? Send a page.",
           endTime: formattedEnd(result.focusEndsAt || result.expiresAt),
           actionable: true,
         });
         return;
       }
       if (result?.linkState === "expired" || result?.code === "STATUS_LINK_EXPIRED") {
-        setState({ heading: "Pager status ended", message: "This private status link has expired or was switched off. Ask the sender for a new one if you still need them." });
+        setState({ heading: "Pager status ended", message: "This link has ended. Ask the sender for a new one." });
         return;
       }
       if (result?.code === "FEATURE_UNAVAILABLE") {
         setState({ heading: "Status sharing is paused", message: "PageMe messaging is still available, but status links are temporarily paused.", retryable: true });
         return;
       }
-      setState({ heading: "Invalid status link", message: "PageMe could not find this private status link. Ask the sender for a new one." });
+      setState({ heading: "Invalid status link", message: "Ask the sender for a new link." });
     } catch (_) {
       setState({
         heading: navigator.onLine ? "PageMe could not be reached" : "You are offline",

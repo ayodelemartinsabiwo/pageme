@@ -1,0 +1,74 @@
+:root { --paper:#f1f0e8; --muted:#bcc3b6; --lime:#9bbf3a; }
+body { font-family:system-ui,-apple-system,"Segoe UI",sans-serif; }
+body::before { opacity:.012; }
+h1,h2,h3 { letter-spacing:-.035em; line-height:1.12; }
+.hero h1 { font-family:system-ui,-apple-system,"Segoe UI",sans-serif; font-size:clamp(44px,6vw,86px); max-width:850px; letter-spacing:-.055em; line-height:1.02; }
+.hero-offer { font-size:clamp(20px,3vw,28px); }
+.hero-copy { max-width:470px; font-size:18px; }
+.hero { min-height:740px; }
+.hero-media { opacity:.28; }
+.hero-media img { object-fit:contain; object-position:right center; }
+.section { padding-block:80px; }
+.section-heading h2 { font-size:clamp(28px,4vw,46px); }
+.section-heading p { max-width:620px; }
+.feature-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.feature-card { border:1px solid var(--line); border-radius:16px; padding:28px; }
+.feature-number { font-family:'Share Tech Mono',monospace; color:var(--lime); font-size:18px; }
+.feature-card p,.ucn-copy p { font-size:16px; line-height:1.6; }
+.refresh-gallery { display:grid; grid-template-columns:minmax(260px,390px) 1fr; gap:80px; align-items:center; max-width:900px; margin:48px auto 0; }
+.refresh-gallery > img { width:100%; height:auto; border:1px solid var(--line); border-radius:20px; box-shadow:0 16px 60px #0005; }
+.refresh-gallery-controls { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.refresh-gallery-controls button { min-height:52px; padding:12px 20px; background:var(--panel); border:1px solid var(--line); border-radius:12px; color:var(--paper); font:600 16px/1.3 system-ui,sans-serif; cursor:pointer; }
+.refresh-gallery-controls button[aria-pressed=true] { color:var(--ink); background:var(--lime); }
+.refresh-gallery p { color:var(--muted); font-size:14px; }
+.screen-shot img { border-radius:14px; }
+button,a.text-link,.site-nav a,.guide-chapter-button { min-height:48px; }
+a.text-link { display:inline-flex; align-items:center; }
+button:focus-visible,a:focus-visible,select:focus-visible { outline:3px solid var(--lime); outline-offset:4px; }
+.guide-instructions { font-size:16px; line-height:1.6; }
+.guide-main h1 { font-family:system-ui,sans-serif; }
+.status-copy,.status-privacy,.status-note { font-family:system-ui,sans-serif; font-size:16px; line-height:1.5; }
+.status-privacy { font-size:14px; }
+.status-lcd { box-shadow:inset 0 2px 4px #0005; }
+.status-primary { font-family:system-ui,sans-serif; min-height:48px; }
+@media(max-width:700px) { .hero { min-height:720px; } .hero-media { opacity:.16; } .section { padding-block:56px; } .feature-grid { grid-template-columns:1fr; } .refresh-gallery { grid-template-columns:1fr; gap:24px; max-width:390px; } .hero h1 { font-size:clamp(42px,11vw,64px); } }
+@media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }
+
+/* A clear two-column hero keeps the real hardware-inspired UI in view. */
+.hero { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(240px,.7fr); gap:64px; padding:128px max(24px,calc((100vw - 1180px)/2)) 80px; min-height:0; background:radial-gradient(ellipse at 85% 40%,#24301b55,transparent 60%),#090b09; }
+.hero-content { grid-column:1; grid-row:1; width:100%; margin:0; }
+.hero-media { grid-column:2; grid-row:1; position:static; margin:0; overflow:visible; opacity:1; background:none; text-align:center; }
+.hero-media img { position:static; width:min(100%,300px); height:auto; max-width:100%; opacity:1; border-radius:24px; box-shadow:0 24px 80px #0007; }
+.hero-media figcaption { margin-top:16px; color:var(--muted); font-size:14px; }
+.hero-shade,.hero-next { display:none; }
+.hero h1 { font-size:clamp(44px,5.5vw,76px); text-shadow:none; }
+.hero-offer { font-family:inherit; font-size:22px; line-height:1.4; }
+.hero-copy { text-shadow:none; }
+.section-heading { margin-bottom:36px; }
+.feature-grid { gap:16px; border:0; }
+.feature-card { border-color:#ced1c6; background:#e8eadf; }
+.feature-number { color:#4c6217; }
+.feature-card h3 { font-size:24px; margin:24px 0 12px; }
+.feature-card p { color:#41483b; margin:0; }
+.refresh-gallery { gap:56px; margin-top:32px; }
+.refresh-gallery-controls button { transition:background .15s; }
+.ucn-app-shot img { max-height:640px; object-fit:contain; }
+.install-steps { gap:24px; }
+@media(max-width:760px) {
+ .hero { grid-template-columns:1fr; gap:40px; padding:112px 24px 56px; }
+ .hero-media { grid-column:1; grid-row:2; }
+ .hero-media img { width:min(70vw,280px); }
+ .hero h1 { font-size:clamp(42px,10vw,64px); }
+ .hero-content { margin:0; }
+ .hero-actions { gap:16px; }
+ .refresh-gallery { gap:24px; }
+}
+
+.ucn-example { display:inline-block; padding:12px 20px; border:1px solid #526329; border-radius:8px; background:#1a2410; color:#b5d95c; font:32px/1.2 "VT323",monospace; letter-spacing:.08em; }
+.ucn-copy h3 { font-size:26px; }
+.ucn-app-shot { max-width:300px; }
+.refresh-gallery { grid-template-columns:minmax(240px,300px) minmax(0,1fr); max-width:800px; }
+.install-actions p,.ucn-app-shot figcaption { font-size:14px; }
+.install-steps p { font-size:16px; }
+.trust-strip p { font-size:16px; }
+@media(max-width:700px) { .refresh-gallery { grid-template-columns:1fr; max-width:320px; } .ucn-app-shot { max-width:280px; } }

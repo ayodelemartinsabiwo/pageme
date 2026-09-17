@@ -1,89 +1,527 @@
 window.PAGEME_GUIDE = [
   {
-    id: "quick-start", title: "Quick Start", shortTitle: "Quick Start",
-    steps: [
-      { id: "install", title: "Install from Google Play", image: "onboarding.webp", alt: "PageMe welcome screen with the Get started button", instructions: ["Open the PageMe Google Play testing link using the invited Google account.", "Accept the test invitation, install PageMe, then open it from Google Play.", "On the first PageMe screen, choose Get started."], hotspots: [{x:50,y:20},{x:50,y:58},{x:50,y:83}], note: "Google Play handles the installation. PageMe never asks you to install a separate APK." },
-      { id: "register-or-restore", title: "Register or restore your UCN", image: "registration.webp", alt: "PageMe registration form for name, email, focus goal, country, and UCN initials", instructions: ["New users enter the requested profile details and choose three initials for their UCN.", "Select Submit & Generate Cap Code and keep the UCN sent to your email.", "Existing users choose Sign in with UCN and enter the registered email address."], hotspots: [{x:50,y:29},{x:50,y:82},{x:50,y:91}] },
-      { id: "permissions", title: "Set up the permissions you need", image: "permissions.webp", alt: "Enable Pager Mode screen listing required and optional Android permissions", instructions: ["Turn on Notification Capture so allowed alerts can become pages.", "Allow Do Not Disturb and Lock as Home Screen for the focused launcher experience.", "Optional scheduling, calendar, and reminder controls can be allowed now or later.", "Activate Pager Mode becomes available after all required controls are ready."], hotspots: [{x:87,y:25},{x:87,y:37},{x:87,y:64},{x:50,y:91}], note: "Android opens a protected settings screen for each permission. Return to PageMe after making your choice." },
-      { id: "choose-home", title: "Choose PageMe as Home", image: "pin.webp", alt: "PageMe pin pager screen explaining the Android lock confirmation", instructions: ["When Android asks for the Home app, select PageMe and confirm the choice.", "PageMe returns to setup and reflects the Home setting automatically.", "Android may briefly show its launcher while the protected Home choice is applied."], hotspots: [{x:50,y:39},{x:50,y:60},{x:50,y:70}], note: "The exact wording and layout of Android dialogs varies by Samsung model and Android version." },
-      { id: "pin-and-controls", title: "Pin PageMe and learn the controls", image: "home.webp", alt: "PageMe pager home screen with inbox, compose, focus timer, settings, navigation, torch, read, menu, and power controls", instructions: ["Accept Android's App is pinned message the first time it appears.", "Use the five top keys to jump directly to Inbox, Compose, Code Book, Focus Timer, or Settings.", "Use Back, the centred up and down arrows, and the amber action key to navigate.", "Hold Power when you deliberately want to leave Pager Mode."], hotspots: [{x:50,y:70},{x:50,y:81},{x:50,y:92},{x:83,y:92}] }
+    "id": "quick-start",
+    "title": "Quick Start",
+    "shortTitle": "Quick Start",
+    "steps": [
+      {
+        "id": "install",
+        "title": "Install from Google Play",
+        "image": "onboarding.png",
+        "alt": "PageMe Refresh install from google play; captured from the running app with fictional test data",
+        "instructions": [
+          "Open the PageMe Google Play testing link using the invited Google account.",
+          "Accept the test invitation, install PageMe, then open it from Google Play.",
+          "On the first PageMe screen, choose Get started."
+        ],
+        "hotspots": [],
+        "note": "Google Play handles the installation. Use the testing link configured on this website."
+      },
+      {
+        "id": "register-or-restore",
+        "title": "Register or restore your UCN",
+        "image": "registration.png",
+        "alt": "PageMe Refresh register or restore your ucn; captured from the running app with fictional test data",
+        "instructions": [
+          "Choose Get started, or Sign in for an existing account.",
+          "Enter name, email, and pager initials; continue to occupation, country, and focus goal.",
+          "Verify the email code, then copy your assigned UCN."
+        ],
+        "hotspots": []
+      },
+      {
+        "id": "permissions",
+        "title": "Set up the permissions you need",
+        "image": "permissions.png",
+        "alt": "PageMe Refresh set up the permissions you need; captured from the running app with fictional test data",
+        "instructions": [
+          "Turn on Notification Capture so allowed alerts can become pages.",
+          "Set up Silence other alerts and PageMe as Home.",
+          "Optional scheduling, calendar, and reminder controls can be allowed now or later.",
+          "Continue when every required row says Ready, then explicitly start Pager Mode."
+        ],
+        "hotspots": [],
+        "note": "Android opens a protected settings screen for each permission. Return to PageMe after making your choice."
+      },
+      {
+        "id": "choose-home",
+        "title": "Choose PageMe as Home",
+        "image": "permissions.png",
+        "alt": "PageMe Refresh choose pageme as home; captured from the running app with fictional test data",
+        "instructions": [
+          "When Android asks for the Home app, select PageMe and confirm the choice.",
+          "PageMe returns to setup and reflects the Home setting automatically.",
+          "Android may briefly show its launcher while the protected Home choice is applied."
+        ],
+        "hotspots": [],
+        "note": "The exact wording and layout of Android dialogs varies by Samsung model and Android version."
+      },
+      {
+        "id": "pin-and-controls",
+        "title": "Pin PageMe and learn the controls",
+        "image": "home.png",
+        "alt": "PageMe Refresh pin pageme and learn the controls; captured from the running app with fictional test data",
+        "instructions": [
+          "Confirm Android screen pinning when prompted.",
+          "Tap rows directly, or use the arrows and centre key.",
+          "Open More → Help & emergency for control instructions."
+        ],
+        "hotspots": []
+      }
     ]
   },
   {
-    id: "inbox", title: "Inbox", shortTitle: "Inbox",
-    steps: [
-      { id: "app-categories", title: "Choose an app category", image: "inbox-categories.webp", alt: "PageMe inbox grouped into WhatsApp, SMS, PageMe, and Calls categories", instructions: ["Press INBOX to open the category list.", "Use the up and down arrows to select WhatsApp, SMS, PageMe, or Calls.", "The number in brackets shows unread pages or the total in that category."], hotspots: [{x:17,y:70},{x:50,y:25},{x:80,y:31}] },
-      { id: "grouped-senders", title: "Open a grouped sender", image: "inbox-senders.webp", alt: "WhatsApp inbox showing Amina, Study Group, and Family as grouped senders", instructions: ["Select a category to see one row for each sender.", "Repeated messages from the same sender stay inside that sender's conversation.", "Select the sender to see their individual pages."], hotspots: [{x:50,y:19},{x:50,y:26},{x:50,y:91}] },
-      { id: "read-and-reply", title: "Read and reply", image: "read.webp", alt: "A PageMe message from fictional contact Amina with reply available", instructions: ["The sender, source, time, and message are shown together.", "Press SEND when REPLY appears at the bottom of the screen.", "PageMe opens Compose with the recipient already selected."], hotspots: [{x:50,y:19},{x:50,y:48},{x:50,y:92}] },
-      { id: "clear-inbox", title: "Clear the inbox", image: "clear.webp", alt: "PageMe Clear Inbox confirmation with Clear All selected", instructions: ["Open Settings and choose Clear Inbox, or use the inbox clear action.", "Review how many pages will be removed.", "Select CLEAR ALL and press the amber action key. Choose Cancel to keep every page."], hotspots: [{x:50,y:25},{x:50,y:40},{x:50,y:91}] }
+    "id": "inbox",
+    "title": "Inbox",
+    "shortTitle": "Inbox",
+    "steps": [
+      {
+        "id": "app-categories",
+        "title": "Choose an app category",
+        "image": "inbox-categories.png",
+        "alt": "PageMe Refresh choose an app category; captured from the running app with fictional test data",
+        "instructions": [
+          "Press INBOX to open the category list.",
+          "Use the up and down arrows to select WhatsApp, SMS, PageMe, or Calls.",
+          "The number in brackets shows unread pages or the total in that category."
+        ],
+        "hotspots": []
+      },
+      {
+        "id": "grouped-senders",
+        "title": "Open a grouped sender",
+        "image": "inbox-senders.png",
+        "alt": "PageMe Refresh open a grouped sender; captured from the running app with fictional test data",
+        "instructions": [
+          "Select a category to see one row for each sender.",
+          "Repeated messages from the same sender stay inside that sender's conversation.",
+          "Select the sender to see their individual pages."
+        ],
+        "hotspots": []
+      },
+      {
+        "id": "read-and-reply",
+        "title": "Read and reply",
+        "image": "read.png",
+        "alt": "PageMe Refresh read and reply; captured from the running app with fictional test data",
+        "instructions": [
+          "The sender, source, time, and message are shown together.",
+          "Tap Reply when available, or use the contextual REPLY key.",
+          "Page opens with the recipient already selected."
+        ],
+        "hotspots": []
+      },
+      {
+        "id": "clear-inbox",
+        "title": "Clear the inbox",
+        "image": "clear.png",
+        "alt": "PageMe Refresh clear the inbox; captured from the running app with fictional test data",
+        "instructions": [
+          "Open Settings and choose Clear Inbox, or use the inbox clear action.",
+          "Review how many pages will be removed.",
+          "Select CLEAR ALL and press the amber action key. Choose Cancel to keep every page."
+        ],
+        "hotspots": []
+      }
     ]
   },
   {
-    id: "compose-code-book", title: "Compose & Code Book", shortTitle: "Compose",
-    steps: [
-      { id: "new-page", title: "Address and write a page", image: "compose.webp", alt: "PageMe compose screen addressed to Amina with a message being edited", instructions: ["Press COMPOSE, then enter a saved name, phone number, or PageMe UCN in TO.", "Move to MSG and write the page.", "Use MENU to change between text and pager-code mode, then press SEND."], hotspots: [{x:48,y:22},{x:50,y:35},{x:49,y:92}] },
-      { id: "keyboard-cursor", title: "Edit with the cursor arrows", image: "keyboard.webp", alt: "PageMe themed keyboard with left, up, down, and right cursor controls", instructions: ["Tap within TO or MSG to open the themed keyboard.", "Use the bottom left and right arrows to move the cursor through the text.", "Use up and down to move between fields, then return to sending."], hotspots: [{x:50,y:34},{x:18,y:93},{x:50,y:93}] },
-      { id: "pager-codes", title: "Use the Code Book", image: "codes.webp", alt: "PageMe Code Book showing common pager numbers and meanings", instructions: ["Press CODE BOOK to browse familiar pager codes.", "Use the arrows to highlight a code and read its meaning.", "Press the amber action key to place the selected code into Compose."], hotspots: [{x:50,y:70},{x:52,y:30},{x:50,y:92}] }
+    "id": "compose-code-book",
+    "title": "Compose & Code Book",
+    "shortTitle": "Compose",
+    "steps": [
+      {
+        "id": "new-page",
+        "title": "Address and write a page",
+        "image": "compose.png",
+        "alt": "PageMe Refresh address and write a page; captured from the running app with fictional test data",
+        "instructions": [
+          "Choose Page and tap To to enter a registered UCN.",
+          "Tap Message, then type using the pager keyboard.",
+          "Choose Text or Code, then Send."
+        ],
+        "hotspots": []
+      },
+      {
+        "id": "keyboard-cursor",
+        "title": "Edit with the cursor arrows",
+        "image": "keyboard.png",
+        "alt": "PageMe Refresh edit with the cursor arrows; captured from the running app with fictional test data",
+        "instructions": [
+          "Tap within TO or MSG to open the themed keyboard.",
+          "Use the bottom left and right arrows to move the cursor through the text.",
+          "Use up and down to move between fields, then return to sending."
+        ],
+        "hotspots": []
+      },
+      {
+        "id": "pager-codes",
+        "title": "Use the Code Book",
+        "image": "codes.png",
+        "alt": "PageMe Refresh use the code book; captured from the running app with fictional test data",
+        "instructions": [
+          "Open More → Codes.",
+          "Tap a code, or select it with the arrows and centre key.",
+          "Enter a recipient and send."
+        ],
+        "hotspots": []
+      }
     ]
   },
   {
-    id: "ucn-pages", title: "UCN Pages", shortTitle: "UCN Pages",
-    steps: [
-      { id: "understand-your-ucn", title: "Understand and keep your UCN", image: "registration.webp", alt: "PageMe registration screen where a fictional user creates a Unique Code Number", instructions: ["UCN means Unique Code Number. It is the PageMe address created for every registered account.", "Keep the UCN sent to your registered email; PageMe also uses it when restoring your account.", "Share the UCN only with people you want to receive direct PageMe pages from."], hotspots: [{x:50,y:29},{x:50,y:82},{x:50,y:91}], note: "A UCN identifies a PageMe account. It does not reveal the account holder's email address or phone number." },
-      { id: "send-to-ucn", title: "Send a direct page by UCN", image: "compose.webp", alt: "PageMe Compose screen used to address a direct page to a fictional recipient", instructions: ["Press COMPOSE and enter the recipient's complete UCN in TO.", "Write the message in MSG, choose text or pager-code mode, and press SEND.", "PageMe authenticates the sender and delivers the page to the registered recipient's PageMe inbox."], hotspots: [{x:48,y:22},{x:50,y:35},{x:49,y:92}], note: "The recipient must already have a registered PageMe account and a valid UCN." },
-      { id: "receive-and-reply", title: "Receive, reply, and check status", image: "read.webp", alt: "A direct PageMe message from a fictional sender with the reply action available", instructions: ["Open the PAGEME inbox category and choose the sender UCN.", "Read the page and press SEND when REPLY appears.", "Messages you send can show sent, delivered, or read state as the receiving account synchronizes."], hotspots: [{x:50,y:19},{x:50,y:48},{x:50,y:92}] },
-      { id: "group-and-protect", title: "Keep conversations grouped and safe", image: "inbox-messages.webp", alt: "PageMe inbox showing messages grouped inside one fictional sender conversation", instructions: ["Pages from the same UCN stay inside one conversation instead of creating separate sender rows.", "Open the message actions when you need to block a UCN or report an unwanted page.", "Clearing your PageMe inbox removes your copy; account deletion removes the associated account data described in the Privacy Policy."], hotspots: [{x:50,y:19},{x:50,y:43},{x:50,y:91}], note: "UCN pages are delivered through authenticated HTTPS connections and handled under PageMe's Privacy Policy." }
+    "id": "ucn-pages",
+    "title": "UCN Pages",
+    "shortTitle": "UCN Pages",
+    "steps": [
+      {
+        "id": "understand-your-ucn",
+        "title": "Understand and keep your UCN",
+        "image": "ucn.png",
+        "alt": "PageMe Refresh understand and keep your ucn; captured from the running app with fictional test data",
+        "instructions": [
+          "Your UCN is your pager address, such as AYO-001.",
+          "Copy it after signup or from More → Settings → Copy my UCN.",
+          "Keep your email available for account recovery."
+        ],
+        "hotspots": [],
+        "note": "A UCN identifies a PageMe account. It does not reveal the account holder's email address or phone number."
+      },
+      {
+        "id": "send-to-ucn",
+        "title": "Send a direct page by UCN",
+        "image": "compose.png",
+        "alt": "PageMe Refresh send a direct page by ucn; captured from the running app with fictional test data",
+        "instructions": [
+          "Choose Page and tap To to enter a registered UCN.",
+          "Tap Message, then type using the pager keyboard.",
+          "Choose Text or Code, then Send."
+        ],
+        "hotspots": [],
+        "note": "The recipient must already have a registered PageMe account and a valid UCN."
+      },
+      {
+        "id": "receive-and-reply",
+        "title": "Receive, reply, and check status",
+        "image": "read.png",
+        "alt": "PageMe Refresh receive, reply, and check status; captured from the running app with fictional test data",
+        "instructions": [
+          "Open the PAGEME inbox category and choose the sender UCN.",
+          "Read the page and choose Reply.",
+          "Messages you send can show sent, delivered, or read state as the receiving account synchronizes."
+        ],
+        "hotspots": []
+      },
+      {
+        "id": "group-and-protect",
+        "title": "Keep conversations grouped and safe",
+        "image": "inbox-messages.png",
+        "alt": "PageMe Refresh keep conversations grouped and safe; captured from the running app with fictional test data",
+        "instructions": [
+          "Pages from the same UCN stay inside one conversation instead of creating separate sender rows.",
+          "Open the message actions when you need to block a UCN or report an unwanted page.",
+          "Clearing your PageMe inbox removes your copy; account deletion removes the associated account data described in the Privacy Policy."
+        ],
+        "hotspots": [],
+        "note": "UCN pages are delivered through authenticated HTTPS connections and handled under PageMe's Privacy Policy."
+      }
     ]
   },
   {
-    id: "focus-timer", title: "Focus Timer", shortTitle: "Focus Timer",
-    steps: [
-      { id: "duration", title: "Choose a focus duration", image: "timer.webp", alt: "PageMe Focus Timer showing duration choices with one hour selected", instructions: ["Press FOCUS TIMER.", "Select a preset duration or choose Custom to enter minutes.", "Press the amber action key to continue."], hotspots: [{x:50,y:70},{x:50,y:31},{x:50,y:92}] },
-      { id: "soothing-sound", title: "Choose soothing sound", image: "focus-sound.webp", alt: "PageMe Focus Sound screen with Yes play sound selected", instructions: ["Choose Yes, Play Sound for the soothing retro loop.", "Choose No, Keep Silent for a quiet session.", "The selected preference is used when the focus lock begins."], hotspots: [{x:50,y:39},{x:50,y:48},{x:50,y:92}] },
-      { id: "page-delivery", title: "Choose how pages arrive", image: "focus-pages.webp", alt: "PageMe Focus Pages screen with silent inbox-only delivery selected", instructions: ["Normally gives an alert and screen flash for eligible pages.", "Silently keeps new pages in the inbox without interrupting the session.", "Press the amber action key to start the focus lock."], hotspots: [{x:50,y:40},{x:50,y:49},{x:50,y:92}] },
-      { id: "active-countdown", title: "Stay in the active session", image: "focus-active.webp", alt: "PageMe focus locked screen showing 47 minutes remaining", instructions: ["The remaining focus time stays visible.", "Normal exit and unpin actions are blocked during the session.", "Allowed Study Apps and the emergency menu remain available through their intended controls."], hotspots: [{x:50,y:21},{x:50,y:44},{x:50,y:62}] }
+    "id": "focus-timer",
+    "title": "Focus Timer",
+    "shortTitle": "Focus Timer",
+    "steps": [
+      {
+        "id": "duration",
+        "title": "Choose a focus duration",
+        "image": "timer.png",
+        "alt": "PageMe Refresh choose a focus duration; captured from the running app with fictional test data",
+        "instructions": [
+          "Open Focus.",
+          "Choose a duration, or Custom for 1–999 minutes.",
+          "Set sound and page alerts on the same screen."
+        ],
+        "hotspots": []
+      },
+      {
+        "id": "soothing-sound",
+        "title": "Choose soothing sound",
+        "image": "focus-sound.png",
+        "alt": "PageMe Refresh choose soothing sound; captured from the running app with fictional test data",
+        "instructions": [
+          "Open Focus.",
+          "Set Focus sound to On or Off.",
+          "Continue saves the choice; Back discards the draft."
+        ],
+        "hotspots": []
+      },
+      {
+        "id": "page-delivery",
+        "title": "Choose how pages arrive",
+        "image": "focus-pages.png",
+        "alt": "PageMe Refresh choose how pages arrive; captured from the running app with fictional test data",
+        "instructions": [
+          "Set Page alerts to Normal or Silent.",
+          "Normal allows eligible alerts; Silent stores pages in the inbox.",
+          "Choose Continue, then explicitly start focus if the sharing screen appears."
+        ],
+        "hotspots": []
+      },
+      {
+        "id": "active-countdown",
+        "title": "Stay in the active session",
+        "image": "focus-active.png",
+        "alt": "PageMe Refresh stay in the active session; captured from the running app with fictional test data",
+        "instructions": [
+          "The remaining focus time stays visible.",
+          "Normal exit and unpin actions are blocked during the session.",
+          "Allowed Study Apps and the emergency menu remain available through their intended controls."
+        ],
+        "hotspots": []
+      }
     ]
   },
   {
-    id: "study-apps", title: "Study Apps", shortTitle: "Study Apps",
-    steps: [
-      { id: "configure", title: "Choose allowed study apps", image: "settings.webp", alt: "PageMe settings list with Focus Schedule highlighted and Study Apps visible below", instructions: ["Open SETTINGS and move to STUDY APPS.", "Choose up to three useful apps, such as Calendar, Calculator, or Files.", "Save the list before returning to the pager."], hotspots: [{x:83,y:70},{x:50,y:49},{x:50,y:92}] },
-      { id: "open-during-focus", title: "Open a study app during focus", image: "study.webp", alt: "PageMe Study Apps screen listing Calendar, Calculator, and Files", instructions: ["Open Study Apps from the pager during a focus session.", "Select the approved app with the arrows.", "Press the amber action key to launch it. Returning from that app brings you back to PageMe."], hotspots: [{x:50,y:24},{x:50,y:36},{x:50,y:92}] }
+    "id": "study-apps",
+    "title": "Study Apps",
+    "shortTitle": "Study Apps",
+    "steps": [
+      {
+        "id": "configure",
+        "title": "Choose allowed study apps",
+        "image": "settings.png",
+        "alt": "PageMe Refresh choose allowed study apps; captured from the running app with fictional test data",
+        "instructions": [
+          "Open More → Settings and move to Study apps.",
+          "Choose up to three useful apps, such as Calendar, Calculator, or Files.",
+          "Save the list before returning to the pager."
+        ],
+        "hotspots": []
+      },
+      {
+        "id": "open-during-focus",
+        "title": "Open a study app during focus",
+        "image": "study.png",
+        "alt": "PageMe Refresh open a study app during focus; captured from the running app with fictional test data",
+        "instructions": [
+          "Open Study Apps from the pager during a focus session.",
+          "Select the approved app with the arrows.",
+          "Press the amber action key to launch it. Returning from that app brings you back to PageMe."
+        ],
+        "hotspots": []
+      }
     ]
   },
   {
-    id: "schedules-calendar", title: "Schedules & Calendar", shortTitle: "Schedules",
-    steps: [
-      { id: "scheduled-activation", title: "Create an activation schedule", image: "schedule.webp", alt: "PageMe Focus Automation screen showing a one-time scheduled activation", instructions: ["Open SETTINGS, choose FOCUS SCHEDULE, and turn on Scheduled activation.", "Choose One time or Weekly, then set a future local date and time.", "Choose the focus duration. A valid same-day time is allowed when it is still ahead."], hotspots: [{x:88,y:16},{x:73,y:24},{x:50,y:54}] },
-      { id: "calendar-reminders", title: "Configure calendar reminders", image: "calendar.webp", alt: "Complete PageMe automation screen showing calendar keywords, lead time, action, scan, save, and cancel controls", instructions: ["Turn on Calendar reminders without enabling Scheduled activation when you only need calendar-based behavior.", "Enter title keywords such as focus,study and choose how early PageMe should respond.", "Choose Send reminder only or Activate PageMe. The two actions behave differently."], hotspots: [{x:87,y:49},{x:50,y:57},{x:50,y:70}] },
-      { id: "scan-and-save", title: "Scan and save", image: "calendar.webp", alt: "PageMe calendar controls with Calendar access granted, Scan calendar now, and Save automation", instructions: ["Allow calendar access; PageMe can read matching future titles but cannot edit events.", "Select Scan calendar now after adding or changing an event.", "Select Save automation to keep the schedule and calendar choices."], hotspots: [{x:27,y:80},{x:75,y:80},{x:50,y:90}], note: "A zero result means no future event matched, the reminder time passed, or the event was outside the next 30 days." },
-      { id: "cancel-schedule", title: "Cancel a scheduled activation", image: "calendar.webp", alt: "PageMe automation screen with Cancel scheduled activation control", instructions: ["Return to FOCUS SCHEDULE.", "Choose Cancel scheduled activation to stop the saved timed takeover.", "Calendar reminders remain unchanged unless you turn them off and save."], hotspots: [{x:50,y:18},{x:50,y:94},{x:87,y:49}] }
+    "id": "schedules-calendar",
+    "title": "Schedules & Calendar",
+    "shortTitle": "Schedules",
+    "steps": [
+      {
+        "id": "scheduled-activation",
+        "title": "Create an activation schedule",
+        "image": "schedule.png",
+        "alt": "PageMe Refresh create an activation schedule; captured from the running app with fictional test data",
+        "instructions": [
+          "Open More → Settings, choose Schedules & calendar, and turn on Scheduled activation.",
+          "Choose One time or Weekly, then set a future local date and time.",
+          "Choose the focus duration. A valid same-day time is allowed when it is still ahead."
+        ],
+        "hotspots": []
+      },
+      {
+        "id": "calendar-reminders",
+        "title": "Configure calendar reminders",
+        "image": "calendar.png",
+        "alt": "PageMe Refresh configure calendar reminders; captured from the running app with fictional test data",
+        "instructions": [
+          "Turn on Calendar reminders without enabling Scheduled activation when you only need calendar-based behavior.",
+          "Enter title keywords such as focus,study and choose how early PageMe should respond.",
+          "Choose Send reminder only or Activate PageMe. The two actions behave differently."
+        ],
+        "hotspots": []
+      },
+      {
+        "id": "scan-and-save",
+        "title": "Scan and save",
+        "image": "calendar.png",
+        "alt": "PageMe Refresh scan and save; captured from the running app with fictional test data",
+        "instructions": [
+          "Allow calendar access; PageMe can read matching future titles but cannot edit events.",
+          "Select Scan calendar now after adding or changing an event.",
+          "Select Save automation to keep the schedule and calendar choices."
+        ],
+        "hotspots": [],
+        "note": "A zero result means no future event matched, the reminder time passed, or the event was outside the next 30 days."
+      },
+      {
+        "id": "cancel-schedule",
+        "title": "Cancel a scheduled activation",
+        "image": "calendar.png",
+        "alt": "PageMe Refresh cancel a scheduled activation; captured from the running app with fictional test data",
+        "instructions": [
+          "Return to Schedules & calendar.",
+          "Choose Cancel scheduled activation to stop the saved timed takeover.",
+          "Calendar reminders remain unchanged unless you turn them off and save."
+        ],
+        "hotspots": []
+      }
     ]
   },
   {
-    id: "settings", title: "Settings", shortTitle: "Settings",
-    steps: [
-      { id: "alert-display", title: "Set alerts and backlight", image: "settings.webp", alt: "PageMe settings showing Backlight and Alert Tone enabled", instructions: ["Use BACKLIGHT to control the LCD glow.", "Use ALERT TONE to control PageMe's page sound.", "Your selection is saved for the next time PageMe opens."], hotspots: [{x:50,y:25},{x:50,y:30},{x:50,y:92}] },
-      { id: "appearance", title: "Save screen, case, and font", image: "settings.webp", alt: "PageMe settings showing Screen, Case, and Font appearance controls", instructions: ["Move to SCREEN, CASE, or FONT.", "Press the action key to cycle the available appearance choices.", "PageMe stores the chosen appearance on the phone."], hotspots: [{x:50,y:45},{x:50,y:51},{x:50,y:57}] },
-      { id: "emergency-contact", title: "Set one trusted contact", image: "emergency-contact.webp", alt: "PageMe Emergency Contact setup using fictional contact Mama T", instructions: ["Open EMERGENCY SOS in Settings.", "Use Android's one-contact picker or enter one trusted person's details manually.", "Save the contact. PageMe does not read the rest of the address book."], hotspots: [{x:50,y:15},{x:50,y:35},{x:50,y:80}] }
+    "id": "settings",
+    "title": "Settings",
+    "shortTitle": "Settings",
+    "steps": [
+      {
+        "id": "alert-display",
+        "title": "Set alerts and backlight",
+        "image": "settings.png",
+        "alt": "PageMe Refresh set alerts and backlight; captured from the running app with fictional test data",
+        "instructions": [
+          "Use BACKLIGHT to control the LCD glow.",
+          "Use ALERT TONE to control PageMe's page sound.",
+          "Your selection is saved for the next time PageMe opens."
+        ],
+        "hotspots": []
+      },
+      {
+        "id": "appearance",
+        "title": "Save screen, case, and font",
+        "image": "settings.png",
+        "alt": "PageMe Refresh save screen, case, and font; captured from the running app with fictional test data",
+        "instructions": [
+          "Move to SCREEN, CASE, or FONT.",
+          "Press the action key to cycle the available appearance choices.",
+          "PageMe stores the chosen appearance on the phone."
+        ],
+        "hotspots": []
+      },
+      {
+        "id": "emergency-contact",
+        "title": "Set one trusted contact",
+        "image": "emergency-contact.png",
+        "alt": "PageMe Refresh set one trusted contact; captured from the running app with fictional test data",
+        "instructions": [
+          "Open EMERGENCY SOS in Settings.",
+          "Use Android's one-contact picker or enter one trusted person's details manually.",
+          "Save the contact. PageMe does not read the rest of the address book."
+        ],
+        "hotspots": []
+      }
     ]
   },
   {
-    id: "safety-exit", title: "Safety & Exit", shortTitle: "Safety & Exit",
-    steps: [
-      { id: "emergency-menu", title: "Open the emergency menu", image: "emergency.webp", alt: "PageMe emergency menu with emergency call, trusted contact, ten-minute exit, and back options", instructions: ["During focus, press BACK three times to open Emergency.", "Call emergency services or the saved trusted contact when needed.", "Choose Back to Pager if no exit is required."], hotspots: [{x:17,y:81},{x:50,y:31},{x:50,y:55}] },
-      { id: "ten-minute-exit", title: "Take a ten-minute emergency exit", image: "emergency.webp", alt: "PageMe emergency menu with Exit Pager 10 Min selected", instructions: ["Select EXIT PAGER — 10 MIN.", "PageMe temporarily restores access to the normal phone.", "At the end of ten minutes, PageMe returns and resumes the active focus session."], hotspots: [{x:50,y:47},{x:50,y:70},{x:50,y:92}] },
-      { id: "alarms", title: "Handle an active alarm", image: "home.webp", alt: "PageMe home screen where Android alarms can appear as a controlled overlay", instructions: ["A real ringing alarm can appear above PageMe with Snooze and Stop controls.", "Use those controls to end the active alarm without leaving the pager.", "Old alarm notifications should not appear when PageMe first activates."], hotspots: [{x:50,y:34},{x:50,y:45},{x:50,y:70}], note: "Alarm controls appear only while Android reports an alarm as actively ringing." },
-      { id: "normal-exit", title: "Exit and restore Android Home", image: "home.webp", alt: "PageMe pager home screen with Power control at the bottom right", instructions: ["Outside an active focus lock, press and hold Power until the exit progress completes.", "PageMe turns off notification capture for Pager Mode and restores the normal Android launcher.", "Swipe-up, Recents, and other launcher gestures should then work normally."], hotspots: [{x:83,y:92},{x:50,y:70},{x:50,y:82}] }
+    "id": "safety-exit",
+    "title": "Safety & Exit",
+    "shortTitle": "Safety & Exit",
+    "steps": [
+      {
+        "id": "emergency-menu",
+        "title": "Open the emergency menu",
+        "image": "emergency.png",
+        "alt": "PageMe Refresh open the emergency menu; captured from the running app with fictional test data",
+        "instructions": [
+          "During focus, press Back three times quickly.",
+          "Or open More → Help & emergency → Emergency options.",
+          "Choose the appropriate call or temporary-exit action."
+        ],
+        "hotspots": []
+      },
+      {
+        "id": "ten-minute-exit",
+        "title": "Take a ten-minute emergency exit",
+        "image": "emergency.png",
+        "alt": "PageMe Refresh take a ten-minute emergency exit; captured from the running app with fictional test data",
+        "instructions": [
+          "Select EXIT PAGER — 10 MIN.",
+          "PageMe temporarily restores access to the normal phone.",
+          "At the end of ten minutes, PageMe returns and resumes the active focus session."
+        ],
+        "hotspots": []
+      },
+      {
+        "id": "alarms",
+        "title": "Handle an active alarm",
+        "image": "home.png",
+        "alt": "PageMe Refresh handle an active alarm; captured from the running app with fictional test data",
+        "instructions": [
+          "A real ringing alarm can appear above PageMe with Snooze and Stop controls.",
+          "Use those controls to end the active alarm without leaving the pager.",
+          "Old alarm notifications should not appear when PageMe first activates."
+        ],
+        "hotspots": [],
+        "note": "Alarm controls appear only while Android reports an alarm as actively ringing."
+      },
+      {
+        "id": "normal-exit",
+        "title": "Exit and restore Android Home",
+        "image": "home.png",
+        "alt": "PageMe Refresh exit and restore android home; captured from the running app with fictional test data",
+        "instructions": [
+          "Outside an active focus lock, press and hold Power until the exit progress completes.",
+          "PageMe turns off notification capture for Pager Mode and restores the normal Android launcher.",
+          "Swipe-up, Recents, and other launcher gestures should then work normally."
+        ],
+        "hotspots": []
+      }
     ]
   },
   {
-    id: "troubleshooting", title: "Troubleshooting", shortTitle: "Help",
-    steps: [
-      { id: "invited-account", title: "Google Play cannot find the beta", image: "onboarding.webp", alt: "PageMe welcome screen after a successful Google Play installation", instructions: ["Open the test link with the Google account that received the invitation.", "If Play shows another account, switch accounts in Google Play and reopen the link.", "After accepting the invitation, install from the PageMe Play listing."], hotspots: [{x:50,y:20},{x:50,y:58},{x:50,y:83}] },
-      { id: "missing-pages", title: "Expected pages are missing", image: "permissions.webp", alt: "PageMe permission setup with Notification Capture at the top", instructions: ["Check that Notification Capture is still enabled in Android settings.", "Confirm the source app can show notifications and that its conversation is not muted.", "Return to PageMe and open the matching app category and sender group."], hotspots: [{x:87,y:25},{x:50,y:25},{x:17,y:91}] },
-      { id: "android-pinning", title: "PageMe is not staying pinned", image: "pin.webp", alt: "PageMe pin confirmation screen before Android shows its protected pinning dialog", instructions: ["Confirm PageMe is the selected Home app in Android.", "When Android shows App is pinned, choose Got it.", "If the prompt was dismissed, activate Pager Mode again and complete the system confirmation."], hotspots: [{x:50,y:39},{x:50,y:59},{x:50,y:92}], note: "Android's blue confirmation usually appears only when the system needs it; its wording varies between phones." },
-      { id: "calendar-zero", title: "Calendar scan returns zero", image: "calendar.webp", alt: "PageMe calendar automation controls with keyword and Scan calendar now fields", instructions: ["Confirm Calendar access is granted and Calendar reminders is on.", "Make sure the future event title contains one of the saved keywords.", "Check that its lead-time reminder has not already passed, then scan again.", "For scheduled takeover, also allow precise alarms, PageMe as Home, and automatic launch."], hotspots: [{x:87,y:49},{x:50,y:57},{x:75,y:80},{x:50,y:90}] }
+    "id": "troubleshooting",
+    "title": "Troubleshooting",
+    "shortTitle": "Help",
+    "steps": [
+      {
+        "id": "invited-account",
+        "title": "Google Play cannot find the beta",
+        "image": "onboarding.png",
+        "alt": "PageMe Refresh google play cannot find the beta; captured from the running app with fictional test data",
+        "instructions": [
+          "Open the test link with the Google account that received the invitation.",
+          "If Play shows another account, switch accounts in Google Play and reopen the link.",
+          "After accepting the invitation, install from the PageMe Play listing."
+        ],
+        "hotspots": []
+      },
+      {
+        "id": "missing-pages",
+        "title": "Expected pages are missing",
+        "image": "permissions.png",
+        "alt": "PageMe Refresh expected pages are missing; captured from the running app with fictional test data",
+        "instructions": [
+          "Check that Notification Capture is still enabled in Android settings.",
+          "Confirm the source app can show notifications and that its conversation is not muted.",
+          "Return to PageMe and open the matching app category and sender group."
+        ],
+        "hotspots": []
+      },
+      {
+        "id": "android-pinning",
+        "title": "PageMe is not staying pinned",
+        "image": "permissions.png",
+        "alt": "PageMe Refresh pageme is not staying pinned; captured from the running app with fictional test data",
+        "instructions": [
+          "Confirm PageMe is the selected Home app in Android.",
+          "When Android shows App is pinned, choose Got it.",
+          "If the prompt was dismissed, activate Pager Mode again and complete the system confirmation."
+        ],
+        "hotspots": [],
+        "note": "Android's blue confirmation usually appears only when the system needs it; its wording varies between phones."
+      },
+      {
+        "id": "calendar-zero",
+        "title": "Calendar scan returns zero",
+        "image": "calendar.png",
+        "alt": "PageMe Refresh calendar scan returns zero; captured from the running app with fictional test data",
+        "instructions": [
+          "Confirm Calendar access is granted and Calendar reminders is on.",
+          "Make sure the future event title contains one of the saved keywords.",
+          "Check that its lead-time reminder has not already passed, then scan again.",
+          "For scheduled takeover, also allow precise alarms, PageMe as Home, and automatic launch."
+        ],
+        "hotspots": []
+      }
     ]
   }
 ];

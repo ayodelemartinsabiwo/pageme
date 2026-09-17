@@ -13,6 +13,7 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Silkscreen:wght@400;700&family=VT323&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=status-1">
   <link rel="stylesheet" href="page.css?v=status-1">
+  <link rel="stylesheet" href="refresh.css">
 </head>
 <body class="status-body">
   <a class="skip-link" href="#status-main">Skip to status</a>
@@ -26,19 +27,19 @@
       <div class="status-pager-top"><span>PAGE.ME</span><i aria-hidden="true"></i></div>
       <div class="status-lcd" data-status-view aria-live="polite" aria-busy="true">
         <p class="status-signal">INCOMING STATUS</p>
-        <h1 id="status-title">Checking pager status...</h1>
-        <p class="status-copy" data-status-copy>Please wait while PageMe verifies this private link.</p>
+        <h1 id="status-title">Checking status…</h1>
+        <p class="status-copy" data-status-copy>Opening this private link.</p>
         <p class="status-time" data-status-time hidden></p>
         <div class="status-actions" data-status-actions hidden>
-          <a class="status-primary" data-open-app href="#">Open PageMe to send a page</a>
+          <a class="status-primary" data-open-app href="#">Open PageMe</a>
           <a class="play-badge-link" data-download-link aria-label="Get PageMe on Google Play">
             <img src="assets/images/google-play-badge.png" alt="Get it on Google Play" width="646" height="250">
           </a>
         </div>
         <button class="status-retry" type="button" data-status-retry hidden>Try again</button>
-        <p class="status-privacy">This page never reveals the sender's name, UCN, email address, or phone number.</p>
+        <p class="status-privacy">Names and contact details stay private.</p>
       </div>
-      <p class="status-note">Android dialog wording and link handling can vary by phone.</p>
+      <p class="status-note"></p>
     </section>
   </main>
 
