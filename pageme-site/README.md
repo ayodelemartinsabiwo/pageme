@@ -14,7 +14,7 @@ python -m http.server 4173
 
 ## Google Play configuration
 
-`site-config.js` controls Google Play beta availability, the active testing URL, testing status, and access level. The current link is the Internal Testing opt-in page and therefore works only for Google accounts included in the internal tester list.
+`site-config.js` controls Google Play beta availability, the active testing URL, testing status, and access level. The current link is the Closed Testing opt-in page and therefore works only for Google accounts included in the closed tester list.
 
 When Google unlocks Open Testing or Production, set `downloadUrl` to the prepared `publicDownloadUrl`, set `publicTestingAvailable` to `true`, and replace the access/status copy with public-beta wording. Before deploying that cutover, verify the Play listing and installation with a Google account that has never appeared on a PageMe tester list. No page markup change is required.
 

@@ -21,8 +21,8 @@ try {
     }));
     if (result.scrollWidth > result.viewportWidth + 1) throw new Error(`Horizontal overflow at ${width}px: ${result.scrollWidth}px`);
     if (result.ucnTitle !== "A pager address of your own.") throw new Error(`UCN section missing at ${width}px`);
-    if (result.downloadUrl !== "https://play.google.com/apps/internaltest/4701511113601505278") throw new Error("Internal-test link is not current");
-    if (result.status !== "Internal testing on Google Play") throw new Error("Internal-test status is not current");
+    if (result.downloadUrl !== "https://play.google.com/apps/testing/com.pageme.app") throw new Error("Closed-test link is not current");
+    if (result.status !== "Closed testing on Google Play") throw new Error("Closed-test status is not current");
     await page.close();
   }
 
